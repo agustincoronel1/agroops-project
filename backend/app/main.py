@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -11,11 +11,14 @@ from app.api.tasks import router as tasks_router
 from app.core.config import get_settings
 from app.infrastructure.redis import create_redis_client, ping_redis
 from app.graph.builder import build_graph
+from app.infrastructure.checkpointer import open_checkpointer
 from app.infrastructure.chroma import ChromaStore
 from app.rag.ingestion import DEMO_DOCS_DIR, IngestionService
 from app.rag.retriever import ChromaRetriever
 from app.services.graph_processor import make_graph_processor
+from app.services.incident_service import IncidentService
 from app.services.job_service import JobService
+from app.services.reconciliation import JobReconciler
 from app.services.llm import OpenAILLM
 from app.services.task_worker import TaskWorker
 
@@ -53,9 +56,27 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     llm = OpenAILLM(settings)
     store = ChromaStore(settings)
     retriever = ChromaRetriever(store, llm, settings)
-    graph = build_graph(llm, retriever, max_steps=settings.graph_max_steps)
+    stack = AsyncExitStack()
+    try:
+        checkpointer = await stack.enter_async_context(
+            open_checkpointer(settings.redis_url)
+        )
+    except Exception as exc:
+        await redis.aclose()
+        raise RuntimeError(
+            "Cannot initialise the LangGraph checkpointer. It needs Redis Stack "
+            "(RedisJSON + RediSearch) at REDIS_URL."
+        ) from exc
+    graph = build_graph(
+        llm,
+        retriever,
+        max_steps=settings.graph_max_steps,
+        checkpointer=checkpointer,
+        incidents=IncidentService(redis),
+    )
     jobs = JobService(redis)
     try:
+        await JobReconciler(jobs, graph).run()
         for job_id in await jobs.fail_orphaned_running_jobs():
             logger.warning("Job %s was left RUNNING by a previous run: marked FAILED", job_id)
     except Exception:  # noqa: BLE001 - recovery must never block startup
@@ -71,6 +92,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if demo_task:
             demo_task.cancel()
         await worker.stop()
+        await stack.aclose()
         await llm.aclose()
         await redis.aclose()
 

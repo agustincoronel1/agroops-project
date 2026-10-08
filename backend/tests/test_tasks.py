@@ -15,15 +15,84 @@ from app.services.job_service import JobService
 from app.services.task_worker import TaskWorker
 
 
+class FakePipeline:
+    """WATCH/MULTI/EXEC with optimistic-lock semantics (all-or-nothing EXEC)."""
+
+    def __init__(self, redis: "FakeRedis") -> None:
+        self._r = redis
+        self._watched: dict[str, int] = {}
+        self._buffer: list[tuple[str, str, str]] = []
+        self._multi = False
+
+    async def __aenter__(self) -> "FakePipeline":
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        return None
+
+    async def watch(self, key: str) -> None:
+        self._watched[key] = self._r.versions.get(key, 0)
+
+    async def get(self, key: str) -> str | None:
+        return self._r.data.get(key)
+
+    def multi(self) -> None:
+        self._multi = True
+
+    def set(self, key: str, value: str) -> "FakePipeline":
+        self._buffer.append(("set", key, value))
+        return self
+
+    def rpush(self, key: str, value: str) -> "FakePipeline":
+        self._buffer.append(("rpush", key, value))
+        return self
+
+    async def execute(self) -> list[object]:
+        from redis.exceptions import WatchError
+
+        await asyncio.sleep(0)  # let concurrent coroutines interleave
+        if self._r.fail_next_exec:
+            self._r.fail_next_exec = False
+            raise ConnectionError("simulated crash before EXEC")  # nothing applied
+        if any(self._r.versions.get(k, 0) != v for k, v in self._watched.items()):
+            raise WatchError("watched key changed")
+        for op, key, value in self._buffer:
+            if op == "set":
+                self._r.data[key] = value
+                self._r.versions[key] = self._r.versions.get(key, 0) + 1
+            else:
+                self._r.lists.setdefault(key, []).append(value)
+        return [True] * len(self._buffer)
+
+
 class FakeRedis:
     """Minimal in-memory stand-in for the async Redis commands we use."""
 
     def __init__(self) -> None:
         self.data: dict[str, str] = {}
         self.lists: dict[str, list[str]] = {}
+        self.sets: dict[str, set[str]] = {}
+        self.versions: dict[str, int] = {}
+        self.fail_next_exec = False
 
-    async def set(self, key: str, value: str) -> None:
+    async def set(self, key: str, value: str, nx: bool = False) -> bool | None:
+        if nx and key in self.data:
+            return None
         self.data[key] = value
+        self.versions[key] = self.versions.get(key, 0) + 1
+        return True
+
+    def pipeline(self, transaction: bool = True) -> FakePipeline:
+        return FakePipeline(self)
+
+    async def lrange(self, key: str, start: int, end: int) -> list[str]:
+        return list(self.lists.get(key, []))
+
+    async def sadd(self, key: str, member: str) -> None:
+        self.sets.setdefault(key, set()).add(member)
+
+    async def smembers(self, key: str) -> Any:
+        return set(self.sets.get(key, set()))
 
     async def get(self, key: str) -> str | None:
         return self.data.get(key)

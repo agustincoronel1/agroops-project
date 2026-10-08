@@ -3,12 +3,23 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from app.schemas.tasks import Job
+from pydantic import BaseModel
+
+from app.schemas.tasks import Job, JobStatus
 from app.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
 
-Processor = Callable[[Job], Awaitable[dict[str, Any]]]
+
+
+class JobOutcome(BaseModel):
+    """Processor result: either a final result or an action awaiting approval."""
+
+    result: dict[str, Any] | None = None
+    pending_action: dict[str, Any] | None = None
+
+
+Processor = Callable[[Job], Awaitable[dict[str, Any] | JobOutcome]]
 
 
 async def dummy_processor(job: Job) -> dict[str, Any]:
@@ -58,14 +69,24 @@ class TaskWorker:
                 await asyncio.sleep(1)
 
     async def process_job(self, job_id: str) -> None:
+        current = await self._jobs.get_job(job_id)
+        if current is not None and current.status is not JobStatus.PENDING:
+            # Duplicate/stale queue entry: never run (or re-run) a non-pending job.
+            logger.warning("Job %s is %s, not PENDING: skipping", job_id, current.status)
+            return
         job = await self._jobs.mark_running(job_id)
         if job is None:
             logger.warning("Job %s not found, skipping", job_id)
             return
         try:
-            result = await self._processor(job)
+            outcome = await self._processor(job)
         except Exception as exc:
             logger.exception("Job %s failed", job_id)
             await self._jobs.mark_failed(job_id, f"{type(exc).__name__}: {exc}")
         else:
-            await self._jobs.mark_done(job_id, result)
+            if isinstance(outcome, JobOutcome):
+                if outcome.pending_action is not None:
+                    await self._jobs.mark_waiting_approval(job_id, outcome.pending_action)
+                    return
+                outcome = outcome.result or {}
+            await self._jobs.mark_done(job_id, outcome)

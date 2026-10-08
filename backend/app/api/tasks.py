@@ -3,9 +3,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from redis.asyncio import Redis
 
+from app.api.security import require_approval_key
 from app.infrastructure.redis import get_redis
-from app.schemas.tasks import Job, TaskCreateRequest, TaskCreateResponse
-from app.services.job_service import JobService
+from app.schemas.tasks import (
+    ApprovalRequest,
+    Job,
+    TaskCreateRequest,
+    TaskCreateResponse,
+)
+from app.services.job_service import (
+    ApprovalConflictError,
+    JobNotFoundError,
+    JobService,
+)
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -33,3 +43,27 @@ async def get_task(job_id: str, jobs: JobServiceDep) -> Job:
     if job is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Job {job_id} not found")
     return job
+
+
+@router.post(
+    "/{job_id}/approve",
+    response_model=TaskCreateResponse,
+    dependencies=[Depends(require_approval_key)],
+    responses={
+        401: {"description": "Invalid or missing X-API-Key"},
+        404: {"description": "Job not found"},
+        409: {"description": "Job is not waiting for approval / already decided"},
+        503: {"description": "APPROVAL_API_KEY not configured, or Redis unavailable"},
+    },
+)
+async def approve_task(
+    job_id: str, payload: ApprovalRequest, jobs: JobServiceDep
+) -> TaskCreateResponse:
+    """Approve or reject the pending critical action of a WAITING_APPROVAL job."""
+    try:
+        job = await jobs.submit_approval(job_id, payload)
+    except JobNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Job {job_id} not found")
+    except ApprovalConflictError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
+    return TaskCreateResponse(job_id=job.job_id, status=job.status)

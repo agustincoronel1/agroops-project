@@ -150,9 +150,7 @@ def test_rag_threshold_not_changed_arbitrarily() -> None:
 def test_compose_redis_uses_named_volume_and_aof() -> None:
     compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
     redis = compose["services"]["redis"]
-    assert "appendonly yes" in " ".join(redis["command"]) if isinstance(
-        redis["command"], list
-    ) else "appendonly yes" in redis["command"]
+    assert "appendonly yes" in redis["environment"]["REDIS_ARGS"]  # Redis Stack image
     assert any(v.startswith("redis_data:/data") for v in redis["volumes"])
     assert "redis_data" in compose["volumes"] and "chroma_data" in compose["volumes"]
 

@@ -16,6 +16,8 @@ class AgroOpsState(TypedDict):
     steps: int
     agent_outputs: dict[str, str]
     context: dict[str, Any]
+    pending_action: dict[str, Any] | None
+    action_result: dict[str, Any] | None
     result: dict[str, Any] | None
     error: str | None
 
@@ -33,6 +35,8 @@ def new_state(
         steps=0,
         agent_outputs={},
         context={},
+        pending_action=None,
+        action_result=None,
         result=None,
         error=None,
     )

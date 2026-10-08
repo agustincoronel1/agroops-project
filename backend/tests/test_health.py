@@ -1,7 +1,9 @@
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from langgraph.checkpoint.memory import InMemorySaver
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
@@ -9,6 +11,11 @@ from app import main
 from app.infrastructure.redis import get_redis, ping_redis
 from app.main import app
 from app.schemas.health import HealthResponse
+
+
+@asynccontextmanager
+async def _fake_checkpointer(redis_url: str) -> AsyncIterator[InMemorySaver]:
+    yield InMemorySaver()
 
 
 @pytest.fixture
@@ -76,8 +83,12 @@ def test_lifespan_closes_redis_on_shutdown(monkeypatch: pytest.MonkeyPatch) -> N
     fake.ping.return_value = True
     monkeypatch.setattr(main, "create_redis_client", lambda url: fake)
     monkeypatch.setattr(main, "TaskWorker", lambda *args: MagicMock(stop=AsyncMock()))
+    monkeypatch.setattr(main, "open_checkpointer", _fake_checkpointer)
     jobs = MagicMock(fail_orphaned_running_jobs=AsyncMock(return_value=["old-job"]))
     monkeypatch.setattr(main, "JobService", lambda redis: jobs)
+    monkeypatch.setattr(
+        main, "JobReconciler", lambda *a: MagicMock(run=AsyncMock(return_value={}))
+    )
     with TestClient(app) as client:
         assert client.get("/").status_code == 200
     jobs.fail_orphaned_running_jobs.assert_awaited_once()  # recovery runs at startup

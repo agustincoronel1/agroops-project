@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     openai_api_key: SecretStr | None = None
     openai_model: str = "gpt-4o-mini"
+    approval_api_key: SecretStr | None = None
     graph_max_steps: int = 4
     demo_establishment_id: str = "demo"
     embedding_model: str = "text-embedding-3-small"
