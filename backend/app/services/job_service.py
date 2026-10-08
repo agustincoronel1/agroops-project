@@ -4,7 +4,7 @@ from typing import Any
 
 from redis.asyncio import Redis
 
-from app.schemas.tasks import Job, JobStatus
+from app.schemas.tasks import DEFAULT_ESTABLISHMENT_ID, Job, JobStatus
 
 QUEUE_KEY = "agroops:jobs:queue"
 
@@ -19,12 +19,15 @@ class JobService:
     def __init__(self, redis: Redis) -> None:
         self._redis = redis
 
-    async def create_job(self, user_input: str) -> Job:
+    async def create_job(
+        self, user_input: str, establishment_id: str = DEFAULT_ESTABLISHMENT_ID
+    ) -> Job:
         now = datetime.now(UTC)
         job = Job(
             job_id=uuid.uuid4().hex,
             status=JobStatus.PENDING,
             user_input=user_input,
+            establishment_id=establishment_id,
             created_at=now,
             updated_at=now,
         )

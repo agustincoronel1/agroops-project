@@ -23,7 +23,7 @@ JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 async def create_task(
     payload: TaskCreateRequest, jobs: JobServiceDep
 ) -> TaskCreateResponse:
-    job = await jobs.create_job(payload.user_input)
+    job = await jobs.create_job(payload.user_input, payload.establishment_id)
     return TaskCreateResponse(job_id=job.job_id, status=job.status)
 
 

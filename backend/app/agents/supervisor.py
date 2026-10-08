@@ -14,16 +14,17 @@ ROUTER_PROMPT = (
     "Sos el Supervisor de AgroOps. Decidís qué agente consultar a continuación:\n"
     "- operations: datos operativos del establecimiento (lotes, tareas, maquinaria, "
     "incidencias).\n"
-    "- knowledge: conocimiento técnico/documental (buenas prácticas, normativas). "
-    "Actualmente la base documental aún no está conectada.\n"
+    "- knowledge: base documental del establecimiento (procedimientos, fichas de "
+    "maquinaria, descripciones de tareas).\n"
     "- FINISH: ya hay información suficiente para responder (o ningún agente aporta).\n"
     "Podés consultar ambos agentes, de a uno por vez. No repitas un agente ya consultado."
 )
 
 SYNTHESIS_PROMPT = (
     "Sos el Supervisor de AgroOps. Redactá la respuesta final al usuario sintetizando "
-    "los resultados de los agentes. No inventes datos. Si los datos son DEMO o la base "
-    "de conocimiento no está disponible, aclaralo."
+    "los resultados de los agentes. No inventes datos. Si los datos o documentos son DEMO, "
+    "aclaralo. Si el Knowledge Agent no encontró información, reconocelo explícitamente. "
+    "Citá las fuentes documentales entre corchetes."
 )
 
 
@@ -75,5 +76,9 @@ async def supervisor_node(state: AgroOpsState, llm: LLM, max_steps: int) -> dict
     return {
         "next_agent": FINISH,
         "current_step": "supervisor",
-        "result": {"answer": answer, "agents_consulted": consulted},
+        "result": {
+            "answer": answer,
+            "agents_consulted": consulted,
+            "sources": state["context"].get("sources", []),
+        },
     }

@@ -9,6 +9,7 @@ class AgroOpsState(TypedDict):
 
     task_id: str
     user_input: str
+    establishment_id: str
     messages: Annotated[list[AnyMessage], add_messages]
     current_step: str | None
     next_agent: str | None
@@ -19,10 +20,13 @@ class AgroOpsState(TypedDict):
     error: str | None
 
 
-def new_state(task_id: str, user_input: str) -> AgroOpsState:
+def new_state(
+    task_id: str, user_input: str, establishment_id: str = "demo"
+) -> AgroOpsState:
     return AgroOpsState(
         task_id=task_id,
         user_input=user_input,
+        establishment_id=establishment_id,
         messages=[],
         current_step=None,
         next_agent=None,

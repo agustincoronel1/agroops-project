@@ -67,6 +67,17 @@ def test_create_and_get_job(client: TestClient, redis: FakeRedis) -> None:
     assert data["result"] is None
 
 
+def test_create_job_accepts_establishment_id(client: TestClient) -> None:
+    default = client.post("/tasks", json={"user_input": "a"}).json()["job_id"]
+    custom = client.post(
+        "/tasks", json={"user_input": "a", "establishment_id": "finca-1"}
+    ).json()["job_id"]
+    assert client.get(f"/tasks/{default}").json()["establishment_id"] == "demo"
+    assert client.get(f"/tasks/{custom}").json()["establishment_id"] == "finca-1"
+    bad = client.post("/tasks", json={"user_input": "a", "establishment_id": "../x"})
+    assert bad.status_code == 422
+
+
 def test_get_unknown_job_returns_404(client: TestClient) -> None:
     assert client.get("/tasks/nope").status_code == 404
 

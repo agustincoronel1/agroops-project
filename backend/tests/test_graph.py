@@ -59,13 +59,34 @@ async def test_routes_to_both_agents_without_real_documents() -> None:
 @pytest.mark.anyio
 async def test_knowledge_uses_retriever_documents() -> None:
     class Retriever:
-        async def retrieve(self, query: str) -> list[RetrievedDocument]:
-            return [RetrievedDocument(source="doc-x", content="texto")]
+        async def retrieve(
+            self, query: str, establishment_id: str
+        ) -> list[RetrievedDocument]:
+            assert establishment_id == "demo"
+            return [
+                RetrievedDocument(
+                    source="doc-x",
+                    content="texto",
+                    establishment_id="demo",
+                    document_id="d1",
+                    chunk_id="d1-0000",
+                    page=2,
+                )
+            ]
 
     llm = FakeLLM(["knowledge", "FINISH"])
     final = await _run(llm, Retriever())
     assert "doc-x" in llm.complete_calls[0][1]["content"]
     assert final["result"]["agents_consulted"] == ["knowledge"]
+    assert final["result"]["sources"] == [
+        {
+            "source": "doc-x",
+            "document_id": "d1",
+            "chunk_id": "d1-0000",
+            "page": 2,
+            "distance": None,
+        }
+    ]
 
 
 @pytest.mark.anyio

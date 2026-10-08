@@ -13,7 +13,7 @@ def make_graph_processor(graph: CompiledStateGraph, max_steps: int) -> Processor
 
     async def process(job: Job) -> dict[str, Any]:
         final = await graph.ainvoke(
-            new_state(job.job_id, job.user_input), config=graph_config(max_steps)
+            new_state(job.job_id, job.user_input, job.establishment_id), config=graph_config(max_steps)
         )
         if final.get("error"):
             raise RuntimeError(final["error"])

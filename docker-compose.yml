@@ -10,9 +10,14 @@ services:
       REDIS_URL: redis://redis:6379/0
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
     depends_on:
       redis:
         condition: service_healthy
+      chroma:
+        condition: service_started
 
   redis:
     image: redis:7-alpine
@@ -21,3 +26,16 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  chroma:
+    image: chromadb/chroma:1.5.9
+    ports:
+      - "8001:8000"
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+    volumes:
+      - chroma_data:/data
+
+volumes:
+  chroma_data:
