@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -75,6 +75,7 @@ def test_lifespan_closes_redis_on_shutdown(monkeypatch: pytest.MonkeyPatch) -> N
     fake = AsyncMock()
     fake.ping.return_value = True
     monkeypatch.setattr(main, "create_redis_client", lambda url: fake)
+    monkeypatch.setattr(main, "TaskWorker", lambda jobs: MagicMock(stop=AsyncMock()))
     with TestClient(app) as client:
         assert client.get("/").status_code == 200
     fake.aclose.assert_awaited_once()
