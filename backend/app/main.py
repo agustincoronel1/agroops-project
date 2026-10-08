@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
 from app.api.tasks import router as tasks_router
 from app.core.config import get_settings
@@ -53,9 +54,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     store = ChromaStore(settings)
     retriever = ChromaRetriever(store, llm, settings)
     graph = build_graph(llm, retriever, max_steps=settings.graph_max_steps)
-    worker = TaskWorker(
-        JobService(redis), make_graph_processor(graph, settings.graph_max_steps)
-    )
+    jobs = JobService(redis)
+    try:
+        for job_id in await jobs.fail_orphaned_running_jobs():
+            logger.warning("Job %s was left RUNNING by a previous run: marked FAILED", job_id)
+    except Exception:  # noqa: BLE001 - recovery must never block startup
+        logger.exception("Could not recover orphaned jobs")
+    worker = TaskWorker(jobs, make_graph_processor(graph, settings.graph_max_steps))
     worker.start()
     if settings.ingest_demo_on_startup and settings.has_openai_key:
         ingestion = IngestionService(store, llm, settings)
@@ -77,6 +82,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+register_error_handlers(app)
 app.include_router(health_router)
 app.include_router(tasks_router)
 

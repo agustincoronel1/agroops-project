@@ -7,6 +7,11 @@ from redis.asyncio import Redis
 from app.schemas.tasks import DEFAULT_ESTABLISHMENT_ID, Job, JobStatus
 
 QUEUE_KEY = "agroops:jobs:queue"
+JOB_KEY_PATTERN = "agroops:job:*"
+ORPHANED_JOB_ERROR = (
+    "InterruptedError: the service restarted while this job was running; "
+    "it was not re-executed. Submit it again if needed."
+)
 
 
 def _job_key(job_id: str) -> str:
@@ -52,6 +57,23 @@ class JobService:
 
     async def mark_failed(self, job_id: str, error: str) -> Job | None:
         return await self._update(job_id, status=JobStatus.FAILED, error=error)
+
+    async def fail_orphaned_running_jobs(self) -> list[str]:
+        """Mark jobs left RUNNING by a previous process as FAILED (never re-run).
+
+        Call once at startup, before the worker starts: a single worker means any
+        RUNNING job at that point was interrupted by a crash/restart.
+        """
+        recovered: list[str] = []
+        async for key in self._redis.scan_iter(match=JOB_KEY_PATTERN):
+            raw = await self._redis.get(key)
+            if not raw:
+                continue
+            job = Job.model_validate_json(raw)
+            if job.status is JobStatus.RUNNING:
+                await self.mark_failed(job.job_id, ORPHANED_JOB_ERROR)
+                recovered.append(job.job_id)
+        return recovered
 
     async def _update(self, job_id: str, **changes: Any) -> Job | None:
         job = await self.get_job(job_id)

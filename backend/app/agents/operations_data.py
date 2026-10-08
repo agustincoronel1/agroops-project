@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.core.config import get_settings
+
 DATA_SOURCE = "DEMO"
 
 
@@ -92,7 +94,10 @@ def get_incidents() -> list[Incident]:
     return list(_INCIDENTS)
 
 
-def get_snapshot() -> OperationsSnapshot:
+def get_snapshot(establishment_id: str) -> OperationsSnapshot | None:
+    """DEMO data belongs only to the demo establishment; others have none (yet)."""
+    if establishment_id != get_settings().demo_establishment_id:
+        return None
     return OperationsSnapshot(
         lots=get_lots(),
         tasks=get_tasks(),

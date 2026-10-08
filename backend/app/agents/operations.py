@@ -2,6 +2,10 @@ from app.agents.operations_data import get_snapshot
 from app.graph.state import AgroOpsState
 from app.services.llm import LLM
 
+NO_OPERATIONS_DATA_MESSAGE = (
+    "No operational data is available for this establishment."
+)
+
 SYSTEM_PROMPT = (
     "Sos el Operations Agent de AgroOps. Analizás datos operativos de un "
     "establecimiento agropecuario (lotes, tareas, maquinaria, incidencias) y "
@@ -11,7 +15,15 @@ SYSTEM_PROMPT = (
 
 
 async def operations_node(state: AgroOpsState, llm: LLM) -> dict:
-    snapshot = get_snapshot()
+    snapshot = get_snapshot(state["establishment_id"])
+    if snapshot is None:
+        return {
+            "agent_outputs": {
+                **state["agent_outputs"],
+                "operations": NO_OPERATIONS_DATA_MESSAGE,
+            },
+            "current_step": "operations",
+        }
     analysis = await llm.complete(
         [
             {"role": "system", "content": SYSTEM_PROMPT},

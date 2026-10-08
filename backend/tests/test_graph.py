@@ -3,7 +3,11 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from app.agents.knowledge import NO_KNOWLEDGE_MESSAGE, RetrievedDocument
+from app.agents.knowledge import (
+    NO_KNOWLEDGE_MESSAGE,
+    KnowledgeAnswer,
+    RetrievedDocument,
+)
 from app.agents.supervisor import SupervisorDecision
 from app.graph.builder import build_graph, graph_config
 from app.schemas.tasks import Job, JobStatus
@@ -18,11 +22,20 @@ from tests.test_tasks import FakeRedis
 class FakeLLM:
     """Scripted LLM: `decisions` are returned in order by parse()."""
 
-    def __init__(self, decisions: list[str]) -> None:
+    def __init__(
+        self, decisions: list[str], knowledge: KnowledgeAnswer | None = None
+    ) -> None:
         self.decisions = list(decisions)
+        self.knowledge = knowledge or KnowledgeAnswer(
+            answered=True, answer="respuesta documental", supporting_passages=[1]
+        )
         self.complete_calls: list[list[dict[str, str]]] = []
+        self.parse_calls: list[list[dict[str, str]]] = []
 
     async def parse(self, messages: Any, response_model: type[BaseModel]) -> Any:
+        self.parse_calls.append(messages)
+        if response_model is KnowledgeAnswer:
+            return self.knowledge
         return response_model(next=self.decisions.pop(0), reasoning="test")
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
@@ -76,7 +89,7 @@ async def test_knowledge_uses_retriever_documents() -> None:
 
     llm = FakeLLM(["knowledge", "FINISH"])
     final = await _run(llm, Retriever())
-    assert "doc-x" in llm.complete_calls[0][1]["content"]
+    assert "doc-x" in llm.parse_calls[1][1]["content"]
     assert final["result"]["agents_consulted"] == ["knowledge"]
     assert final["result"]["sources"] == [
         {

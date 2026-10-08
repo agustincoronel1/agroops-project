@@ -31,6 +31,13 @@ class FakeRedis:
     async def rpush(self, key: str, value: str) -> None:
         self.lists.setdefault(key, []).append(value)
 
+    async def scan_iter(self, match: str = "*"):  # type: ignore[no-untyped-def]
+        import fnmatch
+
+        for key in list(self.data):
+            if fnmatch.fnmatch(key, match):
+                yield key
+
     async def blpop(self, keys: list[str], timeout: int = 0) -> tuple[str, str] | None:
         for key in keys:
             if self.lists.get(key):

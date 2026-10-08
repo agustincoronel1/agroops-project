@@ -76,6 +76,9 @@ def test_lifespan_closes_redis_on_shutdown(monkeypatch: pytest.MonkeyPatch) -> N
     fake.ping.return_value = True
     monkeypatch.setattr(main, "create_redis_client", lambda url: fake)
     monkeypatch.setattr(main, "TaskWorker", lambda *args: MagicMock(stop=AsyncMock()))
+    jobs = MagicMock(fail_orphaned_running_jobs=AsyncMock(return_value=["old-job"]))
+    monkeypatch.setattr(main, "JobService", lambda redis: jobs)
     with TestClient(app) as client:
         assert client.get("/").status_code == 200
+    jobs.fail_orphaned_running_jobs.assert_awaited_once()  # recovery runs at startup
     fake.aclose.assert_awaited_once()
