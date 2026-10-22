@@ -47,7 +47,8 @@ flowchart LR
 
 ## Ejecución con Docker Compose
 
-Requisitos: Docker Desktop (o Docker Engine con Compose v2). Para ejecutar las pruebas en local: Python 3.12
+Requisitos: Docker Desktop (o Docker Engine) con Docker Compose 2.24 o superior, necesario para el `env_file`
+opcional. Para ejecutar las pruebas en local: Python 3.12
 (la imagen usa `python:3.12-slim`).
 
 ```bash

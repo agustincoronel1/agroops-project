@@ -23,6 +23,7 @@ from fastapi.testclient import TestClient
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, ValidationError
+from redis.exceptions import RedisError
 from tests.test_graph import FakeLLM
 from tests.test_tasks import FakeRedis
 
@@ -112,6 +113,32 @@ async def test_incident_register_is_idempotent() -> None:
     second, created2 = await svc.register("i1", "j1", "demo", req)
     assert (created1, created2) == (True, False)
     assert first.incident_id == second.incident_id
+    assert len(await svc.list_incidents("demo")) == 1
+
+
+@pytest.mark.anyio
+async def test_redis_error_during_register_leaves_no_stored_incident(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: a Redis error mid-register must not leave a stored incident behind.
+
+    The job then fails and cannot be approved again, so a half-written record would be a
+    completed-looking action that the job reports as failed.
+    """
+    redis = FakeRedis()
+    svc = IncidentService(redis)  # type: ignore[arg-type]
+    req = MachineryIncidentRequest(machine="M", description="d", severity="low")
+
+    async def broken_sadd(key: str, member: str) -> None:
+        raise RedisError("simulated outage between the two writes")
+
+    monkeypatch.setattr(redis, "sadd", broken_sadd)
+    with pytest.raises(RedisError):
+        await svc.register("i9", "j9", "demo", req)
+    assert incident_key("i9") not in redis.data
+    assert await svc.list_incidents("demo") == []
+
+    monkeypatch.undo()  # Redis recovers: a retry creates the incident exactly once
+    _, created = await svc.register("i9", "j9", "demo", req)
+    assert created is True
     assert len(await svc.list_incidents("demo")) == 1
 
 

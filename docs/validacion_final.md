@@ -10,7 +10,7 @@ Modelos: `gpt-4o-mini` (routing, respuestas, extracción HITL) con `temperature=
 |---|---|
 | Casos reales con OpenAI (8 casos, corrida final) | **41 de 41 checks** con el check de citas de B1 revisado después de la corrida. Con el check original, **40 de 41** (ver §4, punto 6). Recalculado desde las respuestas guardadas, sin nuevas llamadas. |
 | Pruebas de crash real (SIGKILL del backend) | **14 de 14 checks**. Sin jobs perdidos ni acciones duplicadas. |
-| Tests unitarios | 132 pasan, 5 omitidos (integración sin variable). |
+| Tests unitarios | 133 pasan, 5 omitidos (integración sin variable). |
 | Tests de integración con Chroma real y Redis Stack real | 3 Chroma y 2 Redis pasan (ver §9). |
 | Lint (Ruff) | Sin errores. |
 | Costo real de OpenAI | ≈ USD 0,01 en total (tope: USD 1). |
@@ -119,7 +119,7 @@ llamadas a OpenAI: el stack se levantó con `OPENAI_API_KEY` vacía.
 | Verificación | Resultado |
 |---|---|
 | Ruff (`ruff check backend scripts`) | Sin errores |
-| Unitarios (`pytest`, en `backend/`) | 132 pasan, 5 omitidos (integración sin variable) |
+| Unitarios (`pytest`, en `backend/`) | 133 pasan, 5 omitidos (integración sin variable) |
 | Integración con Redis Stack y Chroma reales (`AGROOPS_INTEGRATION=1`) | 5 pasan: 3 de Chroma y 2 de Redis |
 | `docker compose up --build` | Redis healthy; backend y Chroma arriba |
 | `/health`, `/docs`, `/openapi.json` | 200 |
@@ -139,6 +139,9 @@ Correcciones de esta etapa:
   Tests: `test_worker_retries_a_final_write_that_fails_transiently`,
   `test_permanent_redis_failure_on_finish_keeps_job_running_and_never_reruns` y
   `test_redis_failure_before_start_requeues_the_job_without_running_it`.
+- Registro de incidentes: el índice se escribe antes que el registro (`SET NX`, punto de compromiso). Un error de
+  Redis entre ambas escrituras no deja un incidente guardado mientras el job queda `FAILED`. Test:
+  `test_redis_error_during_register_leaves_no_stored_incident`.
 - Los `assert` de código de producción se reemplazaron por chequeos explícitos (`agents/incident_action.py`,
   `services/llm.py`, `observability/tracing.py`).
 - Compose: puertos de backend, Chroma y Redis atados a `127.0.0.1`; `env_file` opcional para que los valores de
