@@ -23,11 +23,21 @@ class Settings(BaseSettings):
     rag_chunk_size: int = 800
     rag_chunk_overlap: int = 120
     ingest_demo_on_startup: bool = True
+    langsmith_tracing: bool = False
+    langsmith_api_key: SecretStr | None = None
+    langsmith_project: str = "agroops-intelligence"
+    langsmith_endpoint: str | None = None
 
     @property
     def has_openai_key(self) -> bool:
         return self.openai_api_key is not None and bool(
             self.openai_api_key.get_secret_value()
+        )
+
+    @property
+    def has_langsmith_key(self) -> bool:
+        return self.langsmith_api_key is not None and bool(
+            self.langsmith_api_key.get_secret_value()
         )
 
     model_config = SettingsConfigDict(

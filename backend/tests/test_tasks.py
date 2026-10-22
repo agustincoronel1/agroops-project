@@ -3,16 +3,15 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-from langgraph.graph import StateGraph
-from langchain_core.messages import HumanMessage
-
 from app.graph.state import AgroOpsState, new_state
 from app.infrastructure.redis import get_redis
 from app.main import app
 from app.schemas.tasks import Job, JobStatus
 from app.services.job_service import JobService
 from app.services.task_worker import TaskWorker
+from fastapi.testclient import TestClient
+from langchain_core.messages import HumanMessage
+from langgraph.graph import StateGraph
 
 
 class FakePipeline:
@@ -202,7 +201,8 @@ async def test_worker_marks_failed_on_exception(redis: FakeRedis) -> None:
     final = await jobs.get_job(job.job_id)
     assert final is not None
     assert final.status is JobStatus.FAILED
-    assert final.error == "ValueError: boom"
+    assert final.error is not None and final.error.startswith("INTERNAL_ERROR:")
+    assert "boom" not in final.error
     assert final.result is None
 
 

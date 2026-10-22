@@ -9,10 +9,6 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.types import Command
-
 from app.core.config import Settings, get_settings
 from app.infrastructure.redis import get_redis
 from app.main import app
@@ -23,6 +19,9 @@ from app.services.incident_service import IncidentService
 from app.services.job_service import ApprovalConflictError, JobService
 from app.services.reconciliation import RECONCILED_NOTE, JobReconciler
 from app.services.task_worker import TaskWorker
+from fastapi.testclient import TestClient
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
 from tests.test_hitl import HitlLLM, _cfg, _graph, _incident_keys
 from tests.test_tasks import FakeRedis
 
@@ -277,7 +276,8 @@ async def test_summary_failure_after_applied_action_is_done_with_warning() -> No
     assert final.result is not None
     assert final.result["action_status"] == "APPLIED"
     assert final.result["action"]["status"] == "executed" and final.result["answer"] is None
-    assert "applied" in final.result["warning"] and "IndexError" in final.result["warning"]
+    assert "applied" in final.result["warning"]
+    assert "IndexError" not in final.result["warning"]  # internals never reach the API
     assert len(_incident_keys(env.redis)) == 1
 
 
@@ -322,7 +322,7 @@ async def test_rejected_action_with_summary_failure_stays_failed_but_says_no_cha
     await env.worker.process_job(job_id)
     final = await env.jobs.get_job(job_id)
     assert final is not None and final.status is JobStatus.FAILED
-    assert "rejected" in (final.error or "") and _incident_keys(env.redis) == []
+    assert "ACTION_REJECTED_FAILED" in (final.error or "") and _incident_keys(env.redis) == []
 
 
 @pytest.mark.anyio
@@ -334,4 +334,4 @@ async def test_normal_completion_reports_action_status() -> None:
     final = await env.jobs.get_job(job_id)
     assert final is not None and final.status is JobStatus.DONE
     assert final.result is not None and final.result["action_status"] == "APPLIED"
-    assert "warning" not in final.result and final.result["answer"]
+    assert not final.result.get("warning") and final.result["answer"]

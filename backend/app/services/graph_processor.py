@@ -3,17 +3,17 @@ from typing import Any
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
+from app.core.errors import ActionRejectedFailure
 from app.graph.builder import graph_config
 from app.graph.state import new_state
+from app.observability.tracing import job_metadata
 from app.schemas.actions import ActionStatus, action_status_of
 from app.schemas.tasks import Job
 from app.services.task_worker import JobOutcome, Processor
 
 
-def _degraded_result(
-    values: dict[str, Any], action: dict[str, Any], exc: Exception
-) -> dict[str, Any]:
-    """DONE result for an applied action whose summary step failed (no provider details)."""
+def _degraded_result(values: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
+    """DONE result for an applied action whose summary step failed (no internal details)."""
     return {
         "answer": None,
         "agents_consulted": list(values.get("agent_outputs", {})),
@@ -21,8 +21,7 @@ def _degraded_result(
         "action": action,
         "action_status": ActionStatus.APPLIED,
         "warning": (
-            "The approved action was applied, but the final summary could not be "
-            f"generated ({type(exc).__name__})."
+            "The approved action was applied, but the final summary could not be generated."
         ),
     }
 
@@ -38,6 +37,9 @@ def make_graph_processor(graph: CompiledStateGraph, max_steps: int) -> Processor
         config = {
             **graph_config(max_steps),
             "configurable": {"thread_id": job.job_id},
+            "run_name": "agroops.graph",
+            "metadata": job_metadata(job),
+            "tags": ["agroops"],
         }
         if job.approval is not None and job.pending_action is not None:
             graph_input: object = Command(
@@ -56,17 +58,20 @@ def make_graph_processor(graph: CompiledStateGraph, max_steps: int) -> Processor
                 values = snapshot.values or {}
                 action = values.get("action_result")
                 if action_status_of(action) == ActionStatus.APPLIED:
-                    return JobOutcome(result=_degraded_result(values, action, exc))
+                    return JobOutcome(result=_degraded_result(values, action))
                 if action:  # rejected: nothing changed, but keep the failure visible
-                    raise RuntimeError(
-                        f"{type(exc).__name__}: {exc} | the action was rejected; "
-                        "no data was changed"
-                    ) from exc
+                    raise ActionRejectedFailure(f"{type(exc).__name__}: {exc}") from exc
             raise
 
         interrupts = final.get("__interrupt__")
         if interrupts:
-            return JobOutcome(pending_action=dict(interrupts[0].value))
+            return JobOutcome(
+                pending_action=dict(interrupts[0].value),
+                trace_summary={
+                    "agents_consulted": list(final.get("agent_outputs") or {}),
+                    "sources_count": len((final.get("context") or {}).get("sources") or []),
+                },
+            )
         if final.get("error"):
             raise RuntimeError(final["error"])
         if not final.get("result"):

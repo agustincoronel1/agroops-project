@@ -4,11 +4,6 @@ import asyncio
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.types import Command
-from pydantic import BaseModel, ValidationError
-
 from app.core.config import Settings, get_settings
 from app.graph.builder import build_graph, graph_config
 from app.graph.state import new_state
@@ -24,6 +19,10 @@ from app.services.job_service import (
     JobService,
 )
 from app.services.task_worker import TaskWorker
+from fastapi.testclient import TestClient
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+from pydantic import BaseModel, ValidationError
 from tests.test_graph import FakeLLM
 from tests.test_tasks import FakeRedis
 

@@ -6,9 +6,6 @@ from typing import Any
 
 import pytest
 import yaml
-from fastapi.testclient import TestClient
-from redis.exceptions import ConnectionError as RedisConnectionError
-
 from app.agents.knowledge import (
     NO_KNOWLEDGE_MESSAGE,
     KnowledgeAnswer,
@@ -22,6 +19,8 @@ from app.infrastructure.redis import get_redis
 from app.main import app
 from app.schemas.tasks import JobStatus
 from app.services.job_service import ORPHANED_JOB_ERROR, QUEUE_KEY, JobService
+from fastapi.testclient import TestClient
+from redis.exceptions import ConnectionError as RedisConnectionError
 from tests.test_graph import FakeLLM
 from tests.test_tasks import FakeRedis
 
@@ -160,3 +159,38 @@ def test_gitignore_covers_venv_and_caches() -> None:
     lines = (ROOT / ".gitignore").read_text(encoding="utf-8").split()
     for entry in (".venv/", "__pycache__/", ".env"):
         assert entry in lines
+
+
+
+@pytest.mark.anyio
+async def test_synthesis_lists_only_supporting_documents_as_citations() -> None:
+    """Regression: the final answer must not invent citations such as '[Fuente: Knowledge Agent]'."""
+    from app.graph.builder import build_graph, graph_config
+    from app.graph.state import new_state
+
+    llm = FakeLLM(
+        ["knowledge", "FINISH"],
+        knowledge=KnowledgeAnswer(answered=True, answer="ok", supporting_passages=[1, 3]),
+    )
+    graph = build_graph(llm, Retriever(), 4)  # type: ignore[arg-type]
+    final = await graph.ainvoke(new_state("t", "q", "demo"), config=graph_config(4))
+    assert [s["source"] for s in final["result"]["sources"]] == ["doc1.md", "doc3.md"]
+
+    system = llm.complete_calls[-1][0]["content"]
+    allowed = system.split("Los únicos documentos citables son:")[1]
+    assert "[doc1.md], [doc3.md]" in allowed
+    assert "doc2.md" not in system  # retrieved but not supporting: not citable
+    assert "Knowledge Agent" not in allowed
+
+
+@pytest.mark.anyio
+async def test_synthesis_without_sources_forbids_citations() -> None:
+    from app.graph.builder import build_graph, graph_config
+    from app.graph.state import new_state
+
+    llm = FakeLLM(["FINISH"])
+    graph = build_graph(llm)
+    await graph.ainvoke(new_state("t", "q", "demo"), config=graph_config(4))
+    system = llm.complete_calls[-1][0]["content"]
+    assert "no cites ningún documento" in system
+    assert "Los únicos documentos citables" not in system

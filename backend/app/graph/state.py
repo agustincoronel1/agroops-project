@@ -5,7 +5,11 @@ from langgraph.graph.message import add_messages
 
 
 class AgroOpsState(TypedDict):
-    """Shared state for the future multi-agent LangGraph flow."""
+    """State shared by the Supervisor graph and its agents.
+
+    `messages` is kept because checkpoints already stored in Redis carry it; removing a
+    channel would break resuming those jobs. No node writes to it today.
+    """
 
     task_id: str
     user_input: str
