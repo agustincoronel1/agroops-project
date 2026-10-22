@@ -12,6 +12,10 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       APPROVAL_API_KEY: ${APPROVAL_API_KEY:-}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-agroops-intelligence}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-}
       CHROMA_HOST: chroma
       CHROMA_PORT: "8000"
     depends_on:
