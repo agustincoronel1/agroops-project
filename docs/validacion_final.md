@@ -97,11 +97,12 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 - `docs/evidencia/casos_reales/`: resultados crudos de cada corrida (`corrida_1_antes_de_ajustes.json`, `corrida_2.json`, `corrida_3a_knowledge_prompt_too_strict.json`, `corrida_3_knowledge.json`, `corrida_4_final.json`).
 - `docs/evidencia/trazas/`: reportes de LangSmith de las corridas.
 - `docs/evidencia/robustez/crash_recovery.json`: resultados y conteo de trazas de las pruebas de crash.
+- `screenshots/`: capturas de LangSmith de la corrida final (`langsmith_project_runs.png`, `langsmith_trace_waterfall.png`, `langsmith_hitl_*.png`, etc.), con el veredicto de cada una en `screenshots/README.md`.
 - `docs/evidencia/costos.json`: agregado de tokens y costos.
 - Tests: `backend/tests/` (unitarios) y `backend/tests/integration/` (Chroma real, con `AGROOPS_INTEGRATION=1`).
 
 ## 8. Pendientes
 
-1. Capturas de LangSmith: hay 5 capturas, pero muestran una sola ejecución (job `09ab6ab1…`, 15/10). Faltan cuatro: la lista de runs con al menos cinco jobs de la corrida 4 (crítica), las dos trazas del HITL (job `2276e79e…`), el filtro por `job_id` y el embedding con costo NO VERIFICADO. Detalle en `screenshots/README.md`.
+1. Capturas de LangSmith: revisadas en `screenshots/`. La lista de runs del proyecto muestra diez raíces de la corrida 4, con latencia, tokens y costo. El RAG híbrido, el Supervisor y las dos trazas del HITL están documentados con capturas. Quedan dos huecos menores, detallados en `screenshots/README.md`: el filtro por `metadata.job_id` y la etiqueta `NO VERIFICADO` del costo del embedding (el informe la documenta en texto).
 2. Decisión sobre las 16 trazas de corridas QA con LLM mock (`establishment_id` `qa-*`): no se borraron.
 3. Rúbrica oficial: no está en el repositorio. Este informe se basa en los requisitos listados al inicio del proyecto.

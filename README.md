@@ -148,6 +148,8 @@ python scripts/langsmith_report.py <job_id>   # latencia, tokens y costo por nod
 
 Los valores que LangSmith no devuelve aparecen como `NO VERIFICADO`, nunca estimados.
 Evidencia de la corrida final: [docs/evidencia/trazas/corrida_4/](docs/evidencia/trazas/corrida_4/).
+Capturas de LangSmith (lista de runs, RAG híbrido, HITL en dos trazas, costo por llamada), con el veredicto de
+cada una: [screenshots/](screenshots/README.md).
 
 ## Pruebas
 

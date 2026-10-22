@@ -1,57 +1,73 @@
-# LangSmith screenshots (manual capture)
+# Evidencia de LangSmith (capturas manuales)
 
-These captures require your LangSmith login, so they are **not** generated automatically.
-Save each image in this folder with the exact file name below. Do not include the API key,
-account settings, workspace members or any page outside the `agroops-intelligence` project.
+Las capturas requieren el login de LangSmith, así que no se generan automáticamente.
+No deben mostrar la API key, configuración de cuenta, miembros del equipo ni páginas fuera del
+proyecto `agroops-intelligence`.
 
-## Checklist
+Estado al 2026-10-21: **evidencia suficiente para la rúbrica de observabilidad**, con dos huecos
+menores documentados abajo. Las capturas originales (`CAPTURA1`…`CAPTURA6`, del 15/10) se conservan.
 
-| # | File | Where to click | What must be visible |
+## Capturas de la corrida final (21/10)
+
+Todas corresponden a los jobs de `docs/evidencia/casos_reales/corrida_4_final.json`.
+
+| Archivo | Qué demuestra | Requisito que cubre | Veredicto |
 |---|---|---|---|
-| 1 | `langsmith_project_runs.png` | Tracing → project `agroops-intelligence` | Run list with latency, tokens and cost columns; include the five `agroops.job` roots of the load test |
-| 2 | `langsmith_root_output_job_B.png` | Open trace `01a141a6-bfee-7a23-85ff-b86c5af76e80` | The root **Output** panel: `agents_consulted`, `sources_count`, `has_answer`, `status: DONE` |
-| 3 | `langsmith_trace_waterfall.png` | Open trace `01a141a6-da5d-7d10-af79-9a422d59af34` (job C) | Expanded tree: supervisor, operations, knowledge, `knowledge.retrieve`, `openai.embeddings`, `openai.chat`, with latencies |
-| 4 | `langsmith_hitl_threads.png` | Open the two HITL traces of job `7cce4c42563b4346817f87370daf9312` (`01a141a7-2e7b-7bd2-82fd-7d8ed8805074` and `01a141a7-36df-7f63-b24a-4a5768a560ce`) | Trace 1 with `job_status: waiting_approval`, trace 2 with `resumed: true` and `done`, same `job_id` |
-| 5 | `langsmith_llm_call.png` | Any `openai.chat` run inside trace #3 | Model `gpt-4o-mini`, input and output tokens, cost |
-| 6 | `langsmith_embedding_nv.png` | The `openai.embeddings` run inside trace #3 | Real token count and cost shown as NO VERIFICADO (LangSmith has no price for `text-embedding-3-small`) |
-| 7 | `langsmith_metadata_filter.png` | Filter bar: `metadata.job_id = 7cce4c42563b4346817f87370daf9312` | The filter applied and both traces listed |
-| 8 | `langsmith_failed_job.png` (optional) | Trace `01a13fd3-ccc7-7240-8016-7bc8af7b0dd9` (mock project `agroops-intelligence-mocks`) | Status `error` and root Output `status: FAILED`, `error_type: TimeoutError` |
+| `langsmith_project_runs.png` | Lista de traces del proyecto (última 1 día) con 10 raíces `agroops.job`: C1, K1, B1, H1, I1, N1 y los dos HITL (aprobado con `APPLIED`, rechazado con `REJECTED`). Columnas de latencia, tokens y costo. | Al menos 5 ejecuciones con trazabilidad, latencia, tokens y costo | **Correcta.** Es la evidencia principal. |
+| `langsmith_individual_runs.png` | Lista de runs filtrada por `name:agroops.job` (90 runs). Muestra cada ejecución individual con su latencia y su resultado. Las columnas de tokens y costo aparecen vacías en esta vista. | Trazabilidad por ejecución | **Correcta, complementaria.** Las columnas de tokens y costo están en `langsmith_project_runs.png`. |
+| `langsmith_trace_waterfall.png` | Thread del job H1 (`247c5040…`): supervisor, `knowledge.retrieve`, `openai.embeddings`, `openai.chat`. Resumen 7,79 s, 1.368K tokens, costo $0,0003159. Output del knowledge con fuente `procedimiento_control_sembradora.md`, `retrieval: "hybrid"`, distancia 0,186. Metadata `job_id`, `establishment_id`, `resumed: false`. | Supervisor, RAG híbrido, latencia, tokens, costo | **Correcta.** Muestra el RAG híbrido en la salida real. |
+| `langsmith_embedding_nv.png` | Embedding `text-embedding-3-small` del mismo job: 21 tokens y latencia 0,51 s. | Tokens reales de embeddings | **Parcial.** El campo de costo aparece vacío, sin la etiqueta `NO VERIFICADO`. Ver huecos. |
+| `langsmith_hitl_runs.png` | Runs de los dos HITL (aprobación y rechazo): `approval` con `GraphInterrupt`, `prepare_incident`, `register_incident`, y costo por llamada `openai.chat` (por ejemplo $0,00004965 y $0,0000570). | HITL, costo por llamada | **Correcta.** El `GraphInterrupt` en `approval` es la pausa esperada de LangGraph, no un error de ejecución. |
+| `langsmith_hitl_pending.png` | Primera traza del job HITL aprobado (`2276e79e…`): `job_status: waiting_approval`, `resumed: false`, misma `thread_id`. | HITL: pausa | **Correcta.** |
+| `langsmith_hitl_resumed.png` | Segunda traza del mismo job: `job_status: done`, `resumed: true`, misma `job_id`. Agrupadas en un solo thread. | HITL: reanudación | **Correcta.** Juntas con la anterior demuestran las dos trazas del HITL. |
 
-## Status (2026-10-21)
+## Captura adicional (15/10)
 
-Five captures exist (`CAPTURA1`, `CAPTURA2`, `CAPTURA3`, `CAPTURA4`, `CAPTURA6`). They were
-reviewed; none shows the checklist traces above. Files are **not renamed** until the set is complete.
-
-| Existing file | What it shows | Covers checklist item |
+| Archivo | Qué demuestra | Veredicto |
 |---|---|---|
-| `CAPTURA1.png` | Root `agroops.job` of job `09ab6ab1bd4d4a6f853110a244e51bb6` (15/10): latency 8.52 s, 2.021K tokens, cost $0.0005, Output panel (`status DONE`, `agents_consulted`, `has_answer`, `sources_count`), waterfall with `knowledge.retrieve`, `openai.embeddings` (text-embedding-3-small) and `openai.chat` (gpt-4o-mini) with tokens per call | #2 (other job), #3 (other job), part of #5 (tokens, no per-call cost), part of #6 (tokens, no NO VERIFICADO label) |
-| `CAPTURA2.png` | `knowledge.retrieve` output (retrieved DEMO passages) for the same job | RAG evidence (not in the checklist) |
-| `CAPTURA3.png` | Same retrieve output, more passages | RAG evidence (not in the checklist) |
-| `CAPTURA4.png` | Same retrieve output as JSON, tags `agroops`/`worker`, metadata `job_id`, `establishment_id=demo`, `resumed=false` | Part of #7 (metadata, no filter bar) |
-| `CAPTURA6.png` | Swagger `GET /tasks/09ab…` returning `DONE` with sources | FastAPI integration (not LangSmith) |
+| `langsmith_metrics_20261015.png` | Lista de 26 traces del 15/10 (prueba de carga): ocho `agroops.job` con latencia, tokens y costo. | **Complementaria.** Da una segunda serie de ejecuciones trazadas, de una sesión anterior. |
 
-**Missing captures (needed for the "at least 5 executions" requirement):**
+## Capturas originales (15/10, conservadas)
 
-1. **#1 project run list (critical).** Tracing → project `agroops-intelligence` → runs list with the
-   columns Latency, Total tokens and Total cost visible, showing the five final-run roots of
-   `docs/evidencia/casos_reales/corrida_4_final.json` (job IDs in `docs/validacion_final.md` §2).
-   Without it there is no single view of five or more executions.
-2. **#4 HITL threads (critical for HITL traceability).** Job `2276e79e756b46639677b13ce49c21a8`
-   (approve, corrida 4): both traces, the first with `job_status: waiting_approval`, the second
-   with `resumed: true` and `done`, same `job_id`.
-3. **#7 metadata filter.** The same job filtered by `metadata.job_id`, with both traces listed.
-   Can be one capture together with #4.
-4. **#6 embedding with NO VERIFICADO (needed by the "costs when available" requirement).** An
-   `openai.embeddings` run from corrida 4 showing the real token count and the cost as NO VERIFICADO.
+| Archivo | Qué demuestra |
+|---|---|
+| `CAPTURA1.png` | Root `agroops.job` del job `09ab6ab1…`: latencia, tokens, costo y Output del root; waterfall con los nodos. |
+| `CAPTURA2.png`, `CAPTURA3.png` | Salida de `knowledge.retrieve` del mismo job. |
+| `CAPTURA4.png` | Salida JSON de `knowledge.retrieve` con tags y metadata. |
+| `CAPTURA6.png` | Swagger `GET /tasks/09ab…` con `DONE`. Integración FastAPI, no LangSmith. |
 
-Optional: #5 (one `openai.chat` run with its cost; CAPTURA1 has tokens only) and #8 (failed job).
-A failed-job trace from the crash tests exists (job `e6a481f35d92432388921f4365ea2ed4` in
-`docs/evidencia/robustez/crash_recovery.json`, status `error`, `job_status=failed`).
+## Huecos
 
-Checklist targets for #1, #4 and #7 are now the corrida 4 jobs above. The earlier job IDs in the table
-are from the 15/10 run and are kept as history.
+1. **Filtro por `metadata.job_id` (checklist #7): falta.** La vista de thread de los dos HITL ya agrupa las
+   dos trazas por `job_id` y `thread_id`, así que el requisito queda cubierto en lo esencial. Una captura del
+   filtro lo haría explícito, pero no es imprescindible.
+2. **Costo del embedding como `NO VERIFICADO` (checklist #6): parcial.** LangSmith no tiene precio para
+   `text-embedding-3-small`. La captura muestra los tokens reales, pero no la etiqueta. El informe lo documenta
+   como `NO VERIFICADO` en el texto. Si la rúbrica exige ver la etiqueta en la interfaz, es una captura más.
 
-## After capturing
+## Retención
 
-1. Check that no capture shows the API key, the approval key or account settings.
-2. Reference the files from `FINAL_TEST_REPORT.md` (section "Checklist de capturas") and mark them done there.
+LangSmith conserva las trazas 14 días en este proyecto. Las capturas de la corrida final son la evidencia
+visual; los reportes exportados en `docs/evidencia/trazas/` son la copia permanente de los datos.
+
+## Checklist de referencia (del 15/10)
+
+Los nombres de esta tabla son los que el checklist original esperaba. Los que dicen "Falta" no existen
+como archivo en esta carpeta. Los IDs apuntan a trazas de la corrida del 15/10, que siguen en LangSmith.
+El estado de cada ítem es el de la tabla de arriba.
+
+| # | Archivo esperado | Estado |
+|---|---|---|
+| 1 | `langsmith_project_runs.png` | Cumplido |
+| 2 | `langsmith_root_output_job_B.png` | Cubierto por `CAPTURA1.png` (otro job) |
+| 3 | `langsmith_trace_waterfall.png` | Cumplido (`langsmith_trace_waterfall.png`) |
+| 4 | `langsmith_hitl_threads.png` | Cumplido por `langsmith_hitl_pending.png` y `langsmith_hitl_resumed.png` |
+| 5 | `langsmith_llm_call.png` | Cumplido por `langsmith_hitl_runs.png` (costo por llamada) |
+| 6 | `langsmith_embedding_nv.png` | Parcial (ver huecos) |
+| 7 | `langsmith_metadata_filter.png` | Falta (hueco menor) |
+| 8 | `langsmith_failed_job.png` (opcional) | Falta. Hay una traza fallida de los tests de crash, job `e6a481f35d92432388921f4365ea2ed4`. |
+
+## Después de capturar
+
+1. Verificar que ninguna captura muestre la API key, la key de aprobación ni configuración de cuenta.
+2. Referenciar los archivos en el README y en `docs/validacion_final.md`.

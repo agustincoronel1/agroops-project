@@ -151,19 +151,17 @@ Muestra: n = 5 jobs. Se reportan **dos métodos** de p95 porque difieren con n p
 ## 9. Capturas manuales pendientes
 
 El checklist completo, con clics y qué debe verse, está en [screenshots/README.md](screenshots/README.md).
-Estado al 2026-10-21: hay 5 capturas (`CAPTURA1`, `CAPTURA2`, `CAPTURA3`, `CAPTURA4`, `CAPTURA6`) que
-muestran una sola ejecución (job `09ab6ab1bd4d4a6f853110a244e51bb6`, 15/10). Faltan capturas de la lista de
-runs con al menos cinco ejecuciones, del HITL con sus dos trazas, del filtro por `job_id` y del embedding
-con costo NO VERIFICADO.
+Actualización (21/10): las capturas se revisaron y se organizaron en `screenshots/` con los nombres del checklist.
+Veredicto por captura en [screenshots/README.md](screenshots/README.md).
 
-- [ ] 1. `langsmith_project_runs.png` (falta: lista de runs con cinco o más jobs de la corrida 4)
-- [ ] 2. `langsmith_root_output_job_B.png` (parcial: CAPTURA1, otro job)
-- [ ] 3. `langsmith_trace_waterfall.png` (parcial: CAPTURA1, otro job)
-- [ ] 4. `langsmith_hitl_threads.png` (falta: las dos trazas del job `2276e79e756b46639677b13ce49c21a8`)
-- [ ] 5. `langsmith_llm_call.png` (parcial: CAPTURA1 muestra tokens, no costo por llamada)
-- [ ] 6. `langsmith_embedding_nv.png` (falta: embedding con costo NO VERIFICADO)
-- [ ] 7. `langsmith_metadata_filter.png` (falta: filtro por `job_id`; CAPTURA4 muestra metadata sin filtro)
-- [ ] 8. `langsmith_failed_job.png` (opcional; hay traza fallida de los tests de crash)
+- [x] 1. `langsmith_project_runs.png`: diez raíces `agroops.job` de la corrida 4, con latencia, tokens y costo.
+- [x] 2. Output del root: cubierto por `CAPTURA1.png` (otro job, 15/10).
+- [x] 3. `langsmith_trace_waterfall.png`: supervisor, RAG híbrido, tokens y costo.
+- [x] 4. `langsmith_hitl_pending.png` y `langsmith_hitl_resumed.png`: las dos trazas del HITL, mismo `job_id`.
+- [x] 5. `langsmith_hitl_runs.png`: costo por llamada `openai.chat`.
+- [~] 6. `langsmith_embedding_nv.png`: tokens reales; la etiqueta `NO VERIFICADO` no aparece en la captura (se documenta en texto).
+- [ ] 7. Filtro por `metadata.job_id`: falta (hueco menor; el thread del HITL ya agrupa las dos trazas).
+- [ ] 8. `langsmith_failed_job.png` (opcional): falta.
 
 ## 10. Cómo reproducir
 
