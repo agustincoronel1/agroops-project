@@ -1,0 +1,18 @@
+{
+  "corrida_4": {
+    "jobs": 8,
+    "trace_roots": 10,
+    "llm_tokens": 12110,
+    "chat_cost_usd": 0.002505
+  },
+  "robustez": {
+    "jobs": 5,
+    "trace_roots": 6,
+    "llm_tokens": 2411,
+    "chat_cost_usd": 0.000508
+  },
+  "corrida_2_previous": {
+    "jobs": 8,
+    "note": "earlier run, see validacion_final.md"
+  }
+}

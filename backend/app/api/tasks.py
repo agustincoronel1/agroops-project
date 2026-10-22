@@ -62,8 +62,8 @@ async def approve_task(
     """Approve or reject the pending critical action of a WAITING_APPROVAL job."""
     try:
         job = await jobs.submit_approval(job_id, payload)
-    except JobNotFoundError:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Job {job_id} not found")
+    except JobNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Job {job_id} not found") from exc
     except ApprovalConflictError as exc:
-        raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return TaskCreateResponse(job_id=job.job_id, status=job.status)

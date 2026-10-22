@@ -1,21 +1,20 @@
 from typing import Any
 
 import pytest
-from pydantic import BaseModel
-
 from app.agents.knowledge import (
     NO_KNOWLEDGE_MESSAGE,
     KnowledgeAnswer,
     RetrievedDocument,
 )
 from app.agents.supervisor import SupervisorDecision
+from app.core.config import Settings
 from app.graph.builder import build_graph, graph_config
 from app.schemas.tasks import Job, JobStatus
 from app.services.graph_processor import make_graph_processor
 from app.services.job_service import JobService
 from app.services.llm import LLMConfigurationError, OpenAILLM
 from app.services.task_worker import TaskWorker
-from app.core.config import Settings
+from pydantic import BaseModel
 from tests.test_tasks import FakeRedis
 
 
@@ -98,6 +97,7 @@ async def test_knowledge_uses_retriever_documents() -> None:
             "chunk_id": "d1-0000",
             "page": 2,
             "distance": None,
+            "retrieval": "vector",
         }
     ]
 
@@ -149,7 +149,9 @@ async def test_graph_failure_marks_job_failed() -> None:
     await worker.process_job(job.job_id)
     final = await jobs.get_job(job.job_id)
     assert final is not None and final.status is JobStatus.FAILED
-    assert final.error == "TimeoutError: llm down"
+    # Public error is generic: the provider's message never reaches the API.
+    assert final.error is not None and final.error.startswith("INTERNAL_ERROR:")
+    assert "llm down" not in final.error
 
 
 @pytest.mark.anyio

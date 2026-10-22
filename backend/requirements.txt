@@ -9,6 +9,7 @@ httptools==0.8.0
 idna==3.20
 langgraph-checkpoint-redis==0.5.2
 langgraph==1.2.14
+langsmith==0.14.4
 openai==3.26.1
 opentelemetry-api==1.45.1
 pydantic-settings==2.15.0

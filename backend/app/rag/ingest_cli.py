@@ -14,6 +14,7 @@ from app.infrastructure.chroma import ChromaStore
 from app.rag.ingestion import DEMO_DOCS_DIR, IngestionService
 from app.services.llm import OpenAILLM
 
+
 async def main() -> None:
     settings = get_settings()
     parser = argparse.ArgumentParser(description=__doc__)

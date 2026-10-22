@@ -5,8 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pypdf import PdfWriter
-
 from app.agents.knowledge import NO_KNOWLEDGE_MESSAGE, knowledge_node
 from app.core.config import Settings
 from app.graph.builder import build_graph, graph_config
@@ -15,6 +13,7 @@ from app.rag.chunking import chunk_text
 from app.rag.ingestion import DEMO_DOCS_DIR, IngestionService, make_document_id
 from app.rag.loaders import load_document
 from app.rag.retriever import ChromaRetriever
+from pypdf import PdfWriter
 from tests.test_graph import FakeLLM
 
 DIM = 64
@@ -65,9 +64,16 @@ class FakeCollection:
         for i, d, e, m in zip(ids, documents, embeddings, metadatas, strict=True):
             self.rows[i] = {"doc": d, "emb": e, "meta": m}
 
-    async def get(self, where=None, include=None) -> dict[str, Any]:
+    async def get(self, where=None, include=None, limit=None) -> dict[str, Any]:
         hits = {i: r for i, r in self.rows.items() if _match(r["meta"], where)}
-        return {"ids": list(hits), "metadatas": [r["meta"] for r in hits.values()]}
+        if limit is not None:
+            hits = dict(list(hits.items())[:limit])
+        return {
+            "ids": list(hits),
+            "documents": [r["doc"] for r in hits.values()],
+            "metadatas": [r["meta"] for r in hits.values()],
+            "embeddings": [r["emb"] for r in hits.values()],
+        }
 
     async def delete(self, ids) -> None:
         for i in ids:
@@ -248,3 +254,37 @@ async def test_establishment_id_flows_through_graph(parts: Any, settings: Settin
     )
     assert other["result"]["sources"] == []
     assert other["agent_outputs"]["knowledge"] == NO_KNOWLEDGE_MESSAGE
+
+
+@pytest.mark.anyio
+async def test_ingestion_does_not_block_the_event_loop(parts: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: slow sync file/PDF parsing must run off the event loop."""
+    import asyncio
+    import time
+
+    import app.rag.ingestion as ingestion_module
+
+    doc = tmp_path / "lento.txt"
+    doc.write_text("contenido de prueba " * 10, encoding="utf-8")
+    real_load = ingestion_module.load_document
+
+    def slow_load(path: Path) -> list:
+        time.sleep(0.3)  # simulates a heavy PDF parse
+        return real_load(path)
+
+    monkeypatch.setattr(ingestion_module, "load_document", slow_load)
+    service = parts[2]
+    ticks = 0
+
+    async def ticker() -> None:
+        nonlocal ticks
+        while True:
+            await asyncio.sleep(0.01)
+            ticks += 1
+
+    task = asyncio.create_task(ticker())
+    try:
+        await service.ingest_file(doc, "finca-7")
+    finally:
+        task.cancel()
+    assert ticks >= 10  # the loop kept running for the ~0.3 s parse

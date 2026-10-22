@@ -1,6 +1,6 @@
 import uuid
-from datetime import UTC, datetime
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 from redis.asyncio import Redis
@@ -18,8 +18,8 @@ QUEUE_KEY = "agroops:jobs:queue"
 JOB_KEY_PATTERN = "agroops:job:*"
 APPROVAL_TX_RETRIES = 5
 ORPHANED_JOB_ERROR = (
-    "InterruptedError: the service restarted while this job was running; "
-    "it was not re-executed. Submit it again if needed."
+    "INTERRUPTED: el servicio se reinició mientras el job estaba en ejecución. "
+    "No se volvió a ejecutar; enviá la consulta de nuevo si hace falta."
 )
 
 

@@ -3,12 +3,11 @@
 from typing import Any
 
 import pytest
+from app.graph.builder import build_graph, graph_config
+from app.graph.state import new_state
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.errors import GraphRecursionError
 from langgraph.graph.message import add_messages
-
-from app.graph.builder import build_graph, graph_config
-from app.graph.state import new_state
 from tests.test_graph import FakeLLM
 
 

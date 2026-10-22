@@ -1,0 +1,18 @@
+
+=== trace 01a160ab-e37e-72a2-ab23-2621cc9f7f62  (name=agroops.job, status=success) ===
+url: https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a160ab-e37e-72a2-ab23-2621cc9f7f62?poll=true
+job_id=43a5c052a00f460b9d14e69e478809cb establishment_id=finca-real-qa job_status=done resumed=False
+total latency: 6.27s | tokens in/out/total: 1082/284/1366 | cost in/out/total (USD): 0.00015915/0.0001704/0.00032955
+- agroops.job [chain] 6.27s tok=1366 cost=0.00032955
+  - agroops.graph [chain] 6.27s tok=1366 cost=0.00032955
+    - supervisor [chain] 1.81s tok=288 cost=0.0000594
+      - openai.chat [llm] 1.80s tok=288 cost=0.0000594 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO
+    - knowledge [chain] 1.64s tok=442 cost=0.0000978
+      - knowledge.retrieve [retriever] 0.36s tok=21 cost=NO VERIFICADO
+        - openai.embeddings [llm] 0.34s tok=21 cost=NO VERIFICADO model=text-embedding-3-small
+      - openai.chat [llm] 1.28s tok=421 cost=0.0000978 model=gpt-4o-mini
+    - supervisor [chain] 2.81s tok=636 cost=0.00017235
+      - openai.chat [llm] 1.29s tok=319 cost=0.0000771 model=gpt-4o-mini
+      - openai.chat [llm] 1.52s tok=317 cost=0.00009525 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO

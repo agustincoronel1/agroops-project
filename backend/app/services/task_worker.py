@@ -5,11 +5,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.core.errors import public_error
+from app.observability.tracing import job_output, job_trace
 from app.schemas.tasks import Job, JobStatus
 from app.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
-
 
 
 class JobOutcome(BaseModel):
@@ -17,15 +18,11 @@ class JobOutcome(BaseModel):
 
     result: dict[str, Any] | None = None
     pending_action: dict[str, Any] | None = None
+    # Trace-only facts for a pending action (agents consulted, sources count). Never sent to the API.
+    trace_summary: dict[str, Any] | None = None
 
 
 Processor = Callable[[Job], Awaitable[dict[str, Any] | JobOutcome]]
-
-
-async def dummy_processor(job: Job) -> dict[str, Any]:
-    """Placeholder; will be replaced by the LangGraph execution."""
-    await asyncio.sleep(0.5)
-    return {"echo": job.user_input}
 
 
 class TaskWorker:
@@ -34,7 +31,7 @@ class TaskWorker:
     def __init__(
         self,
         job_service: JobService,
-        processor: Processor = dummy_processor,
+        processor: Processor,
         poll_timeout: int = 1,
     ) -> None:
         self._jobs = job_service
@@ -78,15 +75,44 @@ class TaskWorker:
         if job is None:
             logger.warning("Job %s not found, skipping", job_id)
             return
-        try:
-            outcome = await self._processor(job)
-        except Exception as exc:
-            logger.exception("Job %s failed", job_id)
-            await self._jobs.mark_failed(job_id, f"{type(exc).__name__}: {exc}")
-        else:
-            if isinstance(outcome, JobOutcome):
-                if outcome.pending_action is not None:
-                    await self._jobs.mark_waiting_approval(job_id, outcome.pending_action)
-                    return
-                outcome = outcome.result or {}
-            await self._jobs.mark_done(job_id, outcome)
+        async with job_trace(job) as trace_run:
+            try:
+                outcome = await self._processor(job)
+            except Exception as exc:
+                # Full details stay in the server log; the job only gets the public message.
+                logger.exception("Job %s failed", job_id)
+                await self._jobs.mark_failed(job_id, public_error(exc))
+                trace_run.set_status("failed", error_type=type(exc).__name__)
+                trace_run.set_outputs(
+                    job_output(job_id, JobStatus.FAILED, error_type=type(exc).__name__)
+                )
+            else:
+                if isinstance(outcome, JobOutcome):
+                    if outcome.pending_action is not None:
+                        await self._jobs.mark_waiting_approval(job_id, outcome.pending_action)
+                        trace_run.set_status("waiting_approval")
+                        trace_run.set_outputs(
+                            job_output(
+                                job_id,
+                                JobStatus.WAITING_APPROVAL,
+                                action_status="PENDING_APPROVAL",
+                                **(outcome.trace_summary or {}),
+                            )
+                        )
+                        return
+                    outcome = outcome.result or {}
+                await self._jobs.mark_done(job_id, outcome)
+                trace_run.set_status("done")
+                trace_run.set_outputs(_done_output(job_id, outcome))
+
+
+def _done_output(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
+    """Trace output derived from the same result the API returns (counts/flags only)."""
+    return job_output(
+        job_id,
+        JobStatus.DONE,
+        agents_consulted=result.get("agents_consulted") or [],
+        sources_count=len(result.get("sources") or []),
+        action_status=result.get("action_status"),
+        has_answer=bool(result.get("answer")),
+    )

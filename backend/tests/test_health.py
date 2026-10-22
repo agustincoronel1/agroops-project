@@ -3,14 +3,13 @@ from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from langgraph.checkpoint.memory import InMemorySaver
-from fastapi.testclient import TestClient
-from pydantic import ValidationError
-
 from app import main
 from app.infrastructure.redis import get_redis, ping_redis
 from app.main import app
 from app.schemas.health import HealthResponse
+from fastapi.testclient import TestClient
+from langgraph.checkpoint.memory import InMemorySaver
+from pydantic import ValidationError
 
 
 @asynccontextmanager

@@ -1,0 +1,18 @@
+
+=== trace 01a160ab-ff67-7039-8c1a-07595b266b73  (name=agroops.job, status=success) ===
+url: https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a160ab-ff67-7039-8c1a-07595b266b73?poll=true
+job_id=ed379d45e1d9428da06193b22ae9479f establishment_id=demo job_status=done resumed=False
+total latency: 5.34s | tokens in/out/total: 1629/187/1816 | cost in/out/total (USD): 0.0002412/0.0001122/0.0003534
+- agroops.job [chain] 5.34s tok=1816 cost=0.0003534
+  - agroops.graph [chain] 5.34s tok=1816 cost=0.0003534
+    - supervisor [chain] 0.99s tok=288 cost=0.0000594
+      - openai.chat [llm] 0.99s tok=288 cost=0.0000594 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO
+    - knowledge [chain] 1.39s tok=1003 cost=0.00015315
+      - knowledge.retrieve [retriever] 0.45s tok=21 cost=NO VERIFICADO
+        - openai.embeddings [llm] 0.44s tok=21 cost=NO VERIFICADO model=text-embedding-3-small
+      - openai.chat [llm] 0.93s tok=982 cost=0.00015315 model=gpt-4o-mini
+    - supervisor [chain] 2.95s tok=525 cost=0.00014085
+      - openai.chat [llm] 1.24s tok=319 cost=0.0000771 model=gpt-4o-mini
+      - openai.chat [llm] 1.71s tok=206 cost=0.00006375 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO
