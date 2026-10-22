@@ -49,6 +49,16 @@ def citations(answer: str) -> set[str]:
     return set(re.findall(r"\[([^\[\]\n]+\.[A-Za-z0-9]{1,5})\]", answer or ""))
 
 
+def evaluate(r: dict, res: dict, status: str | None, expect_agents, extra) -> None:
+    """Shared by live runs and by re-evaluation of saved answers (no API calls)."""
+    check(r, "status DONE", status == "DONE", status)
+    options = expect_agents if expect_agents and isinstance(expect_agents[0], list) else [expect_agents]
+    check(r, f"delegación {options}", res.get("agents_consulted") in options,
+          res.get("agents_consulted"))
+    if extra:
+        extra(r, res)
+
+
 def run_case(key: str, text: str, est: str, expect_agents: list[str], extra=None) -> dict | None:
     if not selected(key):
         return None
@@ -59,14 +69,31 @@ def run_case(key: str, text: str, est: str, expect_agents: list[str], extra=None
          "status": job.get("status"), "error": job.get("error"),
          "agents_consulted": res.get("agents_consulted"),
          "answer": res.get("answer"), "sources": res.get("sources"), "checks": []}
-    check(r, "status DONE", job.get("status") == "DONE", job.get("status"))
-    options = expect_agents if expect_agents and isinstance(expect_agents[0], list) else [expect_agents]
-    check(r, f"delegación {options}", res.get("agents_consulted") in options,
-          res.get("agents_consulted"))
-    if extra:
-        extra(r, res)
+    evaluate(r, res, job.get("status"), expect_agents, extra)
     RESULTS.append(r)
     return r
+
+
+def case_specs() -> list[tuple]:
+    """(case, question, establishment, expected agents, extra checks) for the eight cases."""
+    demo_docs = {"maquinaria_demo.md", "procedimientos_demo.md", "tareas_agropecuarias_demo.md"}
+    return [
+        ("C1_operations", "¿Qué maquinaria está fuera de servicio y qué tareas están pendientes?",
+         "demo", ["operations"],
+         lambda r, res: (ops_case(r, res), ops_pending_tasks(r, res), no_file_citations(r, res))),
+        ("K1_knowledge", "¿Cuál es el procedimiento de triple lavado del tanque de la pulverizadora?",
+         "demo", ["knowledge"], knowledge_case(demo_docs, ["lavado"])),
+        ("B1_both", "¿Qué maquinaria está fuera de servicio y qué procedimiento de lavado aplica después de fumigar?",
+         "demo", ["operations", "knowledge"],
+         lambda r, res: (ops_case(r, res), knowledge_case(demo_docs, ["lavado"])(r, res))),
+        ("H1_hybrid_code", "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+         "finca-real-qa", ["knowledge"],
+         knowledge_case({"procedimiento_control_sembradora.md"}, ["CTRL-7731-ALFA"])),
+        ("I1_isolation", "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+         "demo", [["knowledge"], []], no_leak("procedimiento_control_sembradora.md")),
+        ("N1_no_info", "¿Cuál es la receta de la torta de chocolate?", "demo",
+         [[], ["knowledge"]], no_info),
+    ]
 
 
 def ops_case(r: dict, res: dict) -> None:
@@ -75,6 +102,10 @@ def ops_case(r: dict, res: dict) -> None:
     broken = [m.name for m in get_machinery() if m.status == "broken"]
     check(r, "menciona la maquinaria rota real (datos DEMO)",
           all(name.lower() in answer for name in broken), broken)
+
+
+def no_file_citations(r: dict, res: dict) -> None:
+    """Only for the pure Operations case: Operations does not cite documents."""
     check(r, "sin citas de archivos (operations no es documental)", not citations(res.get("answer")))
 
 
@@ -158,39 +189,54 @@ def selected(key: str) -> bool:
     return ONLY is None or key in ONLY
 
 
+def print_summary(records: list[dict]) -> None:
+    for r in records:
+        print(f"{r['case']:<18} status={r.get('status', ''):<17} agents={r.get('agents_consulted')}")
+        for c in r.get("checks", []):
+            print(f"    {'PASS' if c['ok'] else 'FAIL'}  {c['check']}  -> {c['detail'][:120]}")
+    total = sum(len(r.get("checks", [])) for r in records)
+    ok = sum(c["ok"] for r in records for c in r.get("checks", []))
+    print(f"\nChecks: {ok}/{total} PASS.")
+
+
+def reevaluate(path: Path) -> None:
+    """Recompute the case checks from SAVED answers. No OpenAI or LangSmith calls."""
+    records = json.loads(path.read_text(encoding="utf-8"))
+    by_case = {rec["case"]: rec for rec in records}
+    for key, _text, _est, expect_agents, extra in case_specs():
+        rec = by_case.get(key)
+        if rec is None:
+            continue
+        before = rec.get("checks", [])
+        r: dict = {"case": key, "checks": []}
+        res = {"answer": rec.get("answer"), "sources": rec.get("sources") or [],
+               "agents_consulted": rec.get("agents_consulted")}
+        evaluate(r, res, rec.get("status"), expect_agents, extra)
+        rec["checks_before_revision"] = before
+        rec["checks"] = r["checks"]
+        rec["revision"] = "checks recomputed from saved answers (no new LLM calls)"
+    path.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    print_summary(records)
+    print(f"Re-evaluated: {path}")
+
+
 def main() -> None:
     global OUT, ONLY
     sys.stdout.reconfigure(encoding="utf-8")
+    if "--reevaluate" in sys.argv:
+        reevaluate(Path(sys.argv[sys.argv.index("--reevaluate") + 1]))
+        return
     if "--only" in sys.argv:
         ONLY = set(sys.argv[sys.argv.index("--only") + 1].split(","))
     if "--out" in sys.argv:
         OUT = Path(sys.argv[sys.argv.index("--out") + 1])
-    demo_docs = {"maquinaria_demo.md", "procedimientos_demo.md", "tareas_agropecuarias_demo.md"}
-    run_case("C1_operations", "¿Qué maquinaria está fuera de servicio y qué tareas están pendientes?",
-             "demo", ["operations"],
-             lambda r, res: (ops_case(r, res), ops_pending_tasks(r, res)))
-    run_case("K1_knowledge", "¿Cuál es el procedimiento de triple lavado del tanque de la pulverizadora?",
-             "demo", ["knowledge"], knowledge_case(demo_docs, ["lavado"]))
-    run_case("B1_both", "¿Qué maquinaria está fuera de servicio y qué procedimiento de lavado aplica después de fumigar?",
-             "demo", ["operations", "knowledge"],
-             lambda r, res: (ops_case(r, res), knowledge_case(demo_docs, ["lavado"])(r, res)))
-    run_case("H1_hybrid_code", "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
-             "finca-real-qa", ["knowledge"],
-             knowledge_case({"procedimiento_control_sembradora.md"}, ["CTRL-7731-ALFA"]))
-    run_case("I1_isolation", "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
-             "demo", [["knowledge"], []], no_leak("procedimiento_control_sembradora.md"))
-    run_case("N1_no_info", "¿Cuál es la receta de la torta de chocolate?", "demo",
-             [[], ["knowledge"]], no_info)
+    for key, text, est, expect_agents, extra in case_specs():
+        run_case(key, text, est, expect_agents, extra)
     hitl("Registrá una incidencia: la cosechadora pierde presión hidráulica", True, "HITL_approve")
     hitl("Registrá una incidencia: el tractor tiene la batería descargada", False, "HITL_reject")
     OUT.write_text(json.dumps(RESULTS, ensure_ascii=False, indent=2), encoding="utf-8")
-    total = sum(len(r["checks"]) for r in RESULTS)
-    ok = sum(c["ok"] for r in RESULTS for c in r["checks"])
-    for r in RESULTS:
-        print(f"{r['case']:<18} status={r['status']:<17} agents={r.get('agents_consulted')}")
-        for c in r["checks"]:
-            print(f"    {'PASS' if c['ok'] else 'FAIL'}  {c['check']}  -> {c['detail'][:120]}")
-    print(f"\nChecks: {ok}/{total} PASS. Results: {OUT}")
+    print_summary(RESULTS)
+    print(f"Results: {OUT}")
 
 
 if __name__ == "__main__":

@@ -150,16 +150,20 @@ Muestra: n = 5 jobs. Se reportan **dos métodos** de p95 porque difieren con n p
 
 ## 9. Capturas manuales pendientes
 
-El checklist completo, con clics y qué debe verse, está en [screenshots/README.md](screenshots/README.md). Resumen:
+El checklist completo, con clics y qué debe verse, está en [screenshots/README.md](screenshots/README.md).
+Estado al 2026-10-21: hay 5 capturas (`CAPTURA1`, `CAPTURA2`, `CAPTURA3`, `CAPTURA4`, `CAPTURA6`) que
+muestran una sola ejecución (job `09ab6ab1bd4d4a6f853110a244e51bb6`, 15/10). Faltan capturas de la lista de
+runs con al menos cinco ejecuciones, del HITL con sus dos trazas, del filtro por `job_id` y del embedding
+con costo NO VERIFICADO.
 
-- [ ] 1. `langsmith_project_runs.png`
-- [ ] 2. `langsmith_root_output_job_B.png` (panel Output del root)
-- [ ] 3. `langsmith_trace_waterfall.png` (job C expandido)
-- [ ] 4. `langsmith_hitl_threads.png` (las dos trazas de E)
-- [ ] 5. `langsmith_llm_call.png` (un `openai.chat`)
-- [ ] 6. `langsmith_embedding_nv.png` (embedding con tokens reales y costo NO VERIFICADO)
-- [ ] 7. `langsmith_metadata_filter.png` (filtro por `job_id`)
-- [ ] 8. `langsmith_failed_job.png` (opcional, proyecto de mocks)
+- [ ] 1. `langsmith_project_runs.png` (falta: lista de runs con cinco o más jobs de la corrida 4)
+- [ ] 2. `langsmith_root_output_job_B.png` (parcial: CAPTURA1, otro job)
+- [ ] 3. `langsmith_trace_waterfall.png` (parcial: CAPTURA1, otro job)
+- [ ] 4. `langsmith_hitl_threads.png` (falta: las dos trazas del job `2276e79e756b46639677b13ce49c21a8`)
+- [ ] 5. `langsmith_llm_call.png` (parcial: CAPTURA1 muestra tokens, no costo por llamada)
+- [ ] 6. `langsmith_embedding_nv.png` (falta: embedding con costo NO VERIFICADO)
+- [ ] 7. `langsmith_metadata_filter.png` (falta: filtro por `job_id`; CAPTURA4 muestra metadata sin filtro)
+- [ ] 8. `langsmith_failed_job.png` (opcional; hay traza fallida de los tests de crash)
 
 ## 10. Cómo reproducir
 

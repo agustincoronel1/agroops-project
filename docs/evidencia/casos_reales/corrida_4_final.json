@@ -28,6 +28,33 @@
         "detail": "['Cosechadora']"
       },
       {
+        "check": "menciona la tarea pendiente real",
+        "ok": true,
+        "detail": "['Aplicación de fungicida']"
+      },
+      {
+        "check": "sin citas de archivos (operations no es documental)",
+        "ok": true,
+        "detail": ""
+      }
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['operations']]",
+        "ok": true,
+        "detail": "['operations']"
+      },
+      {
+        "check": "menciona la maquinaria rota real (datos DEMO)",
+        "ok": true,
+        "detail": "['Cosechadora']"
+      },
+      {
         "check": "sin citas de archivos (operations no es documental)",
         "ok": true,
         "detail": ""
@@ -37,7 +64,8 @@
         "ok": true,
         "detail": "['Aplicación de fungicida']"
       }
-    ]
+    ],
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "K1_knowledge",
@@ -97,7 +125,35 @@
     ],
     "retrieval_modes": [
       "hybrid"
-    ]
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "B1_both",
@@ -146,6 +202,41 @@
         "detail": "['Cosechadora']"
       },
       {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['maquinaria_demo.md', 'procedimientos_demo.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['operations', 'knowledge']]",
+        "ok": true,
+        "detail": "['operations', 'knowledge']"
+      },
+      {
+        "check": "menciona la maquinaria rota real (datos DEMO)",
+        "ok": true,
+        "detail": "['Cosechadora']"
+      },
+      {
         "check": "sin citas de archivos (operations no es documental)",
         "ok": false,
         "detail": ""
@@ -166,9 +257,7 @@
         "detail": "['lavado']"
       }
     ],
-    "retrieval_modes": [
-      "hybrid"
-    ]
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "H1_hybrid_code",
@@ -220,7 +309,35 @@
     ],
     "retrieval_modes": [
       "hybrid"
-    ]
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['CTRL-7731-ALFA']"
+      }
+    ],
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "I1_isolation",
@@ -255,7 +372,30 @@
         "ok": true,
         "detail": "[]"
       }
-    ]
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge'], []]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "sin fuentes de otra finca",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "no revela el procedimiento de otra finca",
+        "ok": true,
+        "detail": "[]"
+      }
+    ],
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "N1_no_info",
@@ -288,7 +428,30 @@
         "ok": true,
         "detail": "set()"
       }
-    ]
+    ],
+    "checks_before_revision": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [[], ['knowledge']]",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "sin fuentes",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "sin citas inventadas",
+        "ok": true,
+        "detail": "set()"
+      }
+    ],
+    "revision": "checks recomputed from saved answers (no new LLM calls)"
   },
   {
     "case": "HITL_approve",

@@ -8,7 +8,7 @@ Modelos: `gpt-4o-mini` (routing, respuestas, extracción HITL) con `temperature=
 
 | Área | Resultado |
 |---|---|
-| Casos reales con OpenAI (8 casos, corrida final) | **41 de 42 checks**. El único "fallo" es un check mal diseñado (ver §4). |
+| Casos reales con OpenAI (8 casos, corrida final) | **41 de 41 checks** tras corregir un check mal diseñado (ver §4). Recalculado desde las respuestas guardadas, sin nuevas llamadas. |
 | Pruebas de crash real (SIGKILL del backend) | **14 de 14 checks**. Sin jobs perdidos ni acciones duplicadas. |
 | Tests unitarios | 125 pasan, 3 omitidos (integración sin variable). |
 | Tests de integración con Chroma real | 3 pasan. |
@@ -70,7 +70,7 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 3. **Knowledge demasiado estricto** (B1). Al pedir "decí lo que no está cubierto" el modelo rechazaba respuestas parciales. Se corrigió: `answered=false` solo si ningún pasaje responde la consulta.
 4. **No determinismo** de la decisión `answered`. Con `temperature` por defecto la misma consulta cambiaba entre corridas. Se fijó `temperature=0` en routing, extracción y respuesta.
 5. **Mensaje interno expuesto**: el mensaje de job huérfano decía `InterruptedError: …`. Ahora es `INTERRUPTED: …`.
-6. **Check mal diseñado** (B1, "sin citas de archivos"). La respuesta combina Operations con Knowledge y cita correctamente los documentos de Knowledge. Es el único fallo de la corrida final y no es un fallo del sistema.
+6. **Check mal diseñado** (B1, "sin citas de archivos"). El check exigía que la parte de Operations no citara documentos, pero el caso B1 combina Operations con Knowledge, y Knowledge sí cita correctamente. Corregido: el check "sin citas" quedó solo para C1 (Operations puro). Los checks se recalcularon desde las respuestas guardadas de la corrida 4, sin nuevas llamadas (`scripts/real_cases_check.py --reevaluate`). El registro original quedó en `checks_before_revision`. Resultado: 41 de 41.
 7. **Severidad HITL no determinista**. Con `temperature=0` la extracción de la severidad es estable entre corridas, pero sigue siendo una decisión del LLM: el humano la revisa antes de aprobar.
 
 ## 5. Limitaciones
@@ -102,6 +102,6 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 
 ## 8. Pendientes
 
-1. Capturas de LangSmith: requieren el login del equipo. Checklist en `screenshots/README.md`.
+1. Capturas de LangSmith: hay 5 capturas, pero muestran una sola ejecución (job `09ab6ab1…`, 15/10). Faltan cuatro: la lista de runs con al menos cinco jobs de la corrida 4 (crítica), las dos trazas del HITL (job `2276e79e…`), el filtro por `job_id` y el embedding con costo NO VERIFICADO. Detalle en `screenshots/README.md`.
 2. Decisión sobre las 16 trazas de corridas QA con LLM mock (`establishment_id` `qa-*`): no se borraron.
 3. Rúbrica oficial: no está en el repositorio. Este informe se basa en los requisitos listados al inicio del proyecto.

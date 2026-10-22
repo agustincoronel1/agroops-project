@@ -17,6 +17,40 @@ account settings, workspace members or any page outside the `agroops-intelligenc
 | 7 | `langsmith_metadata_filter.png` | Filter bar: `metadata.job_id = 7cce4c42563b4346817f87370daf9312` | The filter applied and both traces listed |
 | 8 | `langsmith_failed_job.png` (optional) | Trace `01a13fd3-ccc7-7240-8016-7bc8af7b0dd9` (mock project `agroops-intelligence-mocks`) | Status `error` and root Output `status: FAILED`, `error_type: TimeoutError` |
 
+## Status (2026-10-21)
+
+Five captures exist (`CAPTURA1`, `CAPTURA2`, `CAPTURA3`, `CAPTURA4`, `CAPTURA6`). They were
+reviewed; none shows the checklist traces above. Files are **not renamed** until the set is complete.
+
+| Existing file | What it shows | Covers checklist item |
+|---|---|---|
+| `CAPTURA1.png` | Root `agroops.job` of job `09ab6ab1bd4d4a6f853110a244e51bb6` (15/10): latency 8.52 s, 2.021K tokens, cost $0.0005, Output panel (`status DONE`, `agents_consulted`, `has_answer`, `sources_count`), waterfall with `knowledge.retrieve`, `openai.embeddings` (text-embedding-3-small) and `openai.chat` (gpt-4o-mini) with tokens per call | #2 (other job), #3 (other job), part of #5 (tokens, no per-call cost), part of #6 (tokens, no NO VERIFICADO label) |
+| `CAPTURA2.png` | `knowledge.retrieve` output (retrieved DEMO passages) for the same job | RAG evidence (not in the checklist) |
+| `CAPTURA3.png` | Same retrieve output, more passages | RAG evidence (not in the checklist) |
+| `CAPTURA4.png` | Same retrieve output as JSON, tags `agroops`/`worker`, metadata `job_id`, `establishment_id=demo`, `resumed=false` | Part of #7 (metadata, no filter bar) |
+| `CAPTURA6.png` | Swagger `GET /tasks/09ab…` returning `DONE` with sources | FastAPI integration (not LangSmith) |
+
+**Missing captures (needed for the "at least 5 executions" requirement):**
+
+1. **#1 project run list (critical).** Tracing → project `agroops-intelligence` → runs list with the
+   columns Latency, Total tokens and Total cost visible, showing the five final-run roots of
+   `docs/evidencia/casos_reales/corrida_4_final.json` (job IDs in `docs/validacion_final.md` §2).
+   Without it there is no single view of five or more executions.
+2. **#4 HITL threads (critical for HITL traceability).** Job `2276e79e756b46639677b13ce49c21a8`
+   (approve, corrida 4): both traces, the first with `job_status: waiting_approval`, the second
+   with `resumed: true` and `done`, same `job_id`.
+3. **#7 metadata filter.** The same job filtered by `metadata.job_id`, with both traces listed.
+   Can be one capture together with #4.
+4. **#6 embedding with NO VERIFICADO (needed by the "costs when available" requirement).** An
+   `openai.embeddings` run from corrida 4 showing the real token count and the cost as NO VERIFICADO.
+
+Optional: #5 (one `openai.chat` run with its cost; CAPTURA1 has tokens only) and #8 (failed job).
+A failed-job trace from the crash tests exists (job `e6a481f35d92432388921f4365ea2ed4` in
+`docs/evidencia/robustez/crash_recovery.json`, status `error`, `job_status=failed`).
+
+Checklist targets for #1, #4 and #7 are now the corrida 4 jobs above. The earlier job IDs in the table
+are from the 15/10 run and are kept as history.
+
 ## After capturing
 
 1. Check that no capture shows the API key, the approval key or account settings.

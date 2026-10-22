@@ -187,6 +187,7 @@ Casos reales con OpenAI (consumen créditos; ejecutar solo para validar cambios 
 ```bash
 python scripts/real_cases_check.py                                  # 8 casos
 python scripts/real_cases_check.py --only K1_knowledge,B1_both      # subconjunto
+python scripts/real_cases_check.py --reevaluate docs/evidencia/casos_reales/corrida_4_final.json  # sin llamadas
 ```
 
 Trazas de un job en LangSmith, con latencia, tokens y costo por nodo (solo lectura):
