@@ -288,3 +288,78 @@ async def test_ingestion_does_not_block_the_event_loop(parts: Any, tmp_path: Pat
     finally:
         task.cancel()
     assert ticks >= 10  # the loop kept running for the ~0.3 s parse
+
+
+@pytest.mark.anyio
+async def test_chunking_runs_off_the_event_loop(parts: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: chunking a large document is CPU-bound and must run off the event loop."""
+    import asyncio
+    import time
+
+    import app.rag.ingestion as ingestion_module
+
+    doc = tmp_path / "grande.txt"
+    doc.write_text("parrafo de manual " * 40, encoding="utf-8")
+    real_split = ingestion_module.split_pages
+
+    def slow_split(pages: list, size: int, overlap: int) -> list:
+        time.sleep(0.3)  # simulates chunking a very large document
+        return real_split(pages, size, overlap)
+
+    monkeypatch.setattr(ingestion_module, "split_pages", slow_split)
+    service = parts[2]
+    ticks = 0
+
+    async def ticker() -> None:
+        nonlocal ticks
+        while True:
+            await asyncio.sleep(0.01)
+            ticks += 1
+
+    task = asyncio.create_task(ticker())
+    try:
+        result = await service.ingest_file(doc, "finca-7")
+    finally:
+        task.cancel()
+    assert result.chunks >= 1
+    assert ticks >= 10
+
+
+@pytest.mark.anyio
+async def test_keyword_ranking_runs_off_the_event_loop(
+    parts: Any, settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression: BM25 over the establishment corpus is CPU-bound and must run off the loop."""
+    import asyncio
+    import time
+
+    import app.rag.retriever as retriever_module
+
+    store, embedder, service = parts
+    doc = tmp_path / "manual.txt"
+    doc.write_text("triple lavado del tanque de la pulverizadora " * 5, encoding="utf-8")
+    await service.ingest_file(doc, "demo")
+
+    real_order = retriever_module.keyword_order
+
+    def slow_order(query: str, documents: list[str], top_k: int) -> list[int]:
+        time.sleep(0.3)  # simulates BM25 over a large corpus
+        return real_order(query, documents, top_k)
+
+    monkeypatch.setattr(retriever_module, "keyword_order", slow_order)
+    retriever = ChromaRetriever(store, embedder, settings)  # type: ignore[arg-type]
+    ticks = 0
+
+    async def ticker() -> None:
+        nonlocal ticks
+        while True:
+            await asyncio.sleep(0.01)
+            ticks += 1
+
+    task = asyncio.create_task(ticker())
+    try:
+        docs = await retriever.retrieve("lavado del tanque", "demo")
+    finally:
+        task.cancel()
+    assert docs and docs[0].establishment_id == "demo"
+    assert ticks >= 10

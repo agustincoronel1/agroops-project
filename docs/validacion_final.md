@@ -8,10 +8,10 @@ Modelos: `gpt-4o-mini` (routing, respuestas, extracción HITL) con `temperature=
 
 | Área | Resultado |
 |---|---|
-| Casos reales con OpenAI (8 casos, corrida final) | **41 de 41 checks** tras corregir un check mal diseñado (ver §4). Recalculado desde las respuestas guardadas, sin nuevas llamadas. |
+| Casos reales con OpenAI (8 casos, corrida final) | **41 de 41 checks** con el check de citas de B1 revisado después de la corrida. Con el check original, **40 de 41** (ver §4, punto 6). Recalculado desde las respuestas guardadas, sin nuevas llamadas. |
 | Pruebas de crash real (SIGKILL del backend) | **14 de 14 checks**. Sin jobs perdidos ni acciones duplicadas. |
-| Tests unitarios | 127 pasan, 3 omitidos (integración sin variable). |
-| Tests de integración con Chroma real | 3 pasan. |
+| Tests unitarios | 132 pasan, 5 omitidos (integración sin variable). |
+| Tests de integración con Chroma real y Redis Stack real | 3 Chroma y 2 Redis pasan (ver §9). |
 | Lint (Ruff) | Sin errores. |
 | Costo real de OpenAI | ≈ USD 0,01 en total (tope: USD 1). |
 
@@ -70,7 +70,11 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 3. **Knowledge demasiado estricto** (B1). Al pedir "decí lo que no está cubierto" el modelo rechazaba respuestas parciales. Se corrigió: `answered=false` solo si ningún pasaje responde la consulta.
 4. **No determinismo** de la decisión `answered`. Con `temperature` por defecto la misma consulta cambiaba entre corridas. Se fijó `temperature=0` en routing, extracción y respuesta.
 5. **Mensaje interno expuesto**: el mensaje de job huérfano decía `InterruptedError: …`. Ahora es `INTERRUPTED: …`.
-6. **Check mal diseñado** (B1, "sin citas de archivos"). El check exigía que la parte de Operations no citara documentos, pero el caso B1 combina Operations con Knowledge, y Knowledge sí cita correctamente. Corregido: el check "sin citas" quedó solo para C1 (Operations puro). Los checks se recalcularon desde las respuestas guardadas de la corrida 4, sin nuevas llamadas (`scripts/real_cases_check.py --reevaluate`). El registro original quedó en `checks_before_revision`. Resultado: 41 de 41.
+6. **Check mal diseñado** (B1, "sin citas de archivos"). El check exigía que la parte de Operations no citara documentos, pero el caso B1 combina Operations con Knowledge, y Knowledge sí cita correctamente. Corregido: el check "sin citas" quedó solo para C1 (Operations puro). Los checks se recalcularon desde las respuestas guardadas de la corrida 4, sin nuevas llamadas (`scripts/real_cases_check.py --reevaluate`). El registro original quedó en `checks_before_revision`.
+   **Declaración de la revisión:** el check original de B1 (sin citas de archivos) fallaba con la respuesta real:
+   B1 cumplía 5 de 6, y el total con el check original es 40 de 41. La decisión de revisarlo se tomó después de ver
+   ese resultado. El JSON no se modificó: `corrida_4_final.json` conserva ambos registros, `checks` (revisado) y
+   `checks_before_revision` (original). Con el check revisado: 41 de 41. Un evaluador puede tomar el resultado original como el válido.
 7. **Severidad HITL no determinista**. Con `temperature=0` la extracción de la severidad es estable entre corridas, pero sigue siendo una decisión del LLM: el humano la revisa antes de aprobar.
 
 ## 5. Limitaciones
@@ -106,3 +110,44 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 1. Capturas de LangSmith: revisadas en `screenshots/`. La lista de runs del proyecto muestra diez raíces de la corrida 4, con latencia, tokens y costo. El RAG híbrido, el Supervisor y las dos trazas del HITL están documentados con capturas. Quedan dos huecos menores, detallados en `screenshots/README.md`: el filtro por `metadata.job_id` y la etiqueta `NO VERIFICADO` del costo del embedding (el informe la documenta en texto).
 2. Decisión sobre las 16 trazas de corridas QA con LLM mock (`establishment_id` `qa-*`): no se borraron.
 3. Rúbrica oficial: no está en el repositorio. Este informe se basa en los requisitos listados al inicio del proyecto.
+
+## 9. Verificación de las correcciones de auditoría
+
+Rama `fix/auditoria-final`, 2026-10-22. Los resultados históricos de §2 a §7 no se modificaron. Esta etapa no hizo
+llamadas a OpenAI: el stack se levantó con `OPENAI_API_KEY` vacía.
+
+| Verificación | Resultado |
+|---|---|
+| Ruff (`ruff check backend scripts`) | Sin errores |
+| Unitarios (`pytest`, en `backend/`) | 132 pasan, 5 omitidos (integración sin variable) |
+| Integración con Redis Stack y Chroma reales (`AGROOPS_INTEGRATION=1`) | 5 pasan: 3 de Chroma y 2 de Redis |
+| `docker compose up --build` | Redis healthy; backend y Chroma arriba |
+| `/health`, `/docs`, `/openapi.json` | 200 |
+| Usuario del proceso en el contenedor backend | `agroops` (no root) |
+| Puertos publicados | `127.0.0.1` para backend (8000), Chroma (8001) y Redis (6379) |
+| Endpoints sin LLM | Body inválido 422. Job creado → FAILED `LLM_NOT_CONFIGURED`. Approve sin clave 401; con clave en job fallido 409 |
+
+Los dos tests de Redis real cubren lo que los fakes no pueden: la aprobación concurrente con `WATCH/MULTI` deja una
+sola decisión y un solo encolado, y un grafo pausado en `interrupt` se reanuda con `Command(resume=...)` tras un
+reinicio simulado, usando solo el checkpoint en Redis.
+
+Correcciones de esta etapa:
+- BM25 (`keyword_order`) y chunking (`split_pages`) se ejecutan con `asyncio.to_thread`. Tests de regresión:
+  `test_keyword_ranking_runs_off_the_event_loop` y `test_chunking_runs_off_the_event_loop`.
+- Fallos de Redis al finalizar un job: reintentos con backoff. Si Redis sigue caído, el job queda como fue guardado
+  por última vez y nunca se vuelve a ejecutar. Si el fallo ocurre antes de arrancar, el job vuelve a la cola.
+  Tests: `test_worker_retries_a_final_write_that_fails_transiently`,
+  `test_permanent_redis_failure_on_finish_keeps_job_running_and_never_reruns` y
+  `test_redis_failure_before_start_requeues_the_job_without_running_it`.
+- Los `assert` de código de producción se reemplazaron por chequeos explícitos (`agents/incident_action.py`,
+  `services/llm.py`, `observability/tracing.py`).
+- Compose: puertos de backend, Chroma y Redis atados a `127.0.0.1`; `env_file` opcional para que los valores de
+  `.env` lleguen al contenedor; `backend/.dockerignore`; el proceso corre como usuario `agroops`.
+- Defaults: `config.py` y `.env.example` usan valores de ejecución local. Compose sobrescribe Redis y Chroma con
+  los valores de la red de contenedores.
+
+Pendientes (no corregidos en esta etapa):
+- `POST /tasks` y `GET /tasks/{id}` no tienen autenticación. La única barrera es publicar los puertos solo en localhost.
+- Operations usa datos DEMO estáticos.
+- Los tests de regresión de asincronía no se ejecutaron contra el código anterior para confirmar que fallaban.
+  Su alcance es que el código actual mantenga el trabajo fuera del loop.

@@ -7,11 +7,12 @@ from app.graph.state import AgroOpsState, new_state
 from app.infrastructure.redis import get_redis
 from app.main import app
 from app.schemas.tasks import Job, JobStatus
-from app.services.job_service import JobService
+from app.services.job_service import QUEUE_KEY, JobService
 from app.services.task_worker import TaskWorker
 from fastapi.testclient import TestClient
 from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph
+from redis.exceptions import RedisError
 
 
 class FakePipeline:
@@ -223,6 +224,84 @@ async def test_worker_background_loop_processes_and_stops(redis: FakeRedis) -> N
         await asyncio.sleep(0.01)
     await worker.stop()
     assert current is not None and current.status is JobStatus.DONE
+
+
+def _fail_n_times(monkeypatch: pytest.MonkeyPatch, obj: Any, method: str, times: int) -> None:
+    """Make `obj.method` raise RedisError on its first `times` calls, then behave normally."""
+    original = getattr(obj, method)
+    calls = {"n": 0}
+
+    async def flaky(*args: Any, **kwargs: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] <= times:
+            raise RedisError("simulated Redis outage")
+        return await original(*args, **kwargs)
+
+    monkeypatch.setattr(obj, method, flaky)
+
+
+@pytest.mark.anyio
+async def test_worker_retries_a_final_write_that_fails_transiently(
+    redis: FakeRedis, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    jobs = JobService(redis)  # type: ignore[arg-type]
+    runs: list[str] = []
+
+    async def processor(job: Job) -> dict[str, Any]:
+        runs.append(job.job_id)
+        return {"ok": True}
+
+    job = await jobs.create_job("hola")
+    _fail_n_times(monkeypatch, jobs, "mark_done", times=2)
+    await TaskWorker(jobs, processor, persist_backoff=0).process_job(job.job_id)
+
+    final = await jobs.get_job(job.job_id)
+    assert final is not None and final.status is JobStatus.DONE
+    assert final.result == {"ok": True}
+    assert runs == [job.job_id]  # executed once: the write retry never re-runs the graph
+
+
+@pytest.mark.anyio
+async def test_permanent_redis_failure_on_finish_keeps_job_running_and_never_reruns(
+    redis: FakeRedis, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    jobs = JobService(redis)  # type: ignore[arg-type]
+    runs: list[str] = []
+
+    async def processor(job: Job) -> dict[str, Any]:
+        runs.append(job.job_id)
+        return {"ok": True}
+
+    job = await jobs.create_job("hola")
+    _fail_n_times(monkeypatch, jobs, "mark_done", times=100)
+    worker = TaskWorker(jobs, processor, persist_attempts=3, persist_backoff=0)
+    await worker.process_job(job.job_id)  # must not raise: the worker keeps running
+
+    final = await jobs.get_job(job.job_id)
+    assert final is not None and final.status is JobStatus.RUNNING  # left as last saved
+    assert runs == [job.job_id]  # never executed a second time
+
+
+@pytest.mark.anyio
+async def test_redis_failure_before_start_requeues_the_job_without_running_it(
+    redis: FakeRedis, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    jobs = JobService(redis)  # type: ignore[arg-type]
+    runs: list[str] = []
+
+    async def processor(job: Job) -> dict[str, Any]:
+        runs.append(job.job_id)
+        return {"ok": True}
+
+    job = await jobs.create_job("hola")
+    assert await jobs.dequeue() == job.job_id  # the worker took it off the queue...
+    _fail_n_times(monkeypatch, jobs, "mark_running", times=100)  # ...then Redis fails
+    await TaskWorker(jobs, processor).process_job(job.job_id)
+
+    final = await jobs.get_job(job.job_id)
+    assert final is not None and final.status is JobStatus.PENDING
+    assert runs == []
+    assert job.job_id in redis.lists[QUEUE_KEY]  # back in the queue, not lost
 
 
 def test_agroops_state() -> None:

@@ -1,8 +1,14 @@
 services:
   backend:
     build: ./backend
+    # Published on localhost only. The API has no authentication for creating or reading jobs.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    # Optional: .env supplies the OpenAI/LangSmith keys and tuning values. Settings in
+    # `environment` below win over it for the container network (redis, chroma).
+    env_file:
+      - path: .env
+        required: false
     environment:
       APP_NAME: AgroOps Intelligence System
       APP_VERSION: 0.1.0
@@ -27,6 +33,9 @@ services:
   redis:
     # Redis Stack (RedisJSON + RediSearch) is required by the LangGraph Redis checkpointer.
     image: redis/redis-stack-server:7.4.0-v3
+    # Localhost only, for the integration tests (database 15). The app reaches it inside the network.
+    ports:
+      - "127.0.0.1:6379:6379"
     environment:
       REDIS_ARGS: "--appendonly yes"
     volumes:
@@ -39,8 +48,9 @@ services:
 
   chroma:
     image: chromadb/chroma:1.5.9
+    # Localhost only: Chroma has no authentication.
     ports:
-      - "8001:8000"
+      - "127.0.0.1:8001:8000"
     environment:
       IS_PERSISTENT: "TRUE"
       PERSIST_DIRECTORY: /data

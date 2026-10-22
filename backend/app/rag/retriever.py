@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from app.agents.knowledge import RetrievedDocument
@@ -8,7 +9,7 @@ from app.infrastructure.chroma import (
     ensure_embedding_dimension,
 )
 from app.observability.tracing import traceable
-from app.rag.hybrid import bm25_scores, reciprocal_rank_fusion, tokenize
+from app.rag.hybrid import keyword_order, reciprocal_rank_fusion
 from app.services.llm import Embedder
 
 
@@ -73,13 +74,12 @@ class ChromaRetriever:
             found[meta["chunk_id"]] = _document(text, meta, distance, "vector")
             vector_ranking.append(meta["chunk_id"])
 
-        terms = tokenize(query)
         corpus_docs: list[str] = corpus["documents"] or []
         corpus_metas: list[dict[str, Any]] = corpus["metadatas"] or []
-        scores = bm25_scores(terms, [tokenize(text) for text in corpus_docs])
-        best = sorted((i for i, s in enumerate(scores) if s > 0), key=lambda i: -scores[i])
+        # BM25 scans the whole establishment corpus: CPU-bound, so it runs off the event loop.
+        best = await asyncio.to_thread(keyword_order, query, corpus_docs, self._top_k)
         keyword_ranking: list[str] = []
-        for i in best[: self._top_k]:
+        for i in best:
             chunk_id = corpus_metas[i]["chunk_id"]
             keyword_ranking.append(chunk_id)
             found.setdefault(chunk_id, _document(corpus_docs[i], corpus_metas[i], None, "keyword"))

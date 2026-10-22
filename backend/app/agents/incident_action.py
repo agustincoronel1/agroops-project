@@ -41,7 +41,8 @@ async def approval_node(state: AgroOpsState, incidents: IncidentService) -> dict
     """Step 2: human gate. On resume this node re-runs from the top, so everything
     before `interrupt()` is side-effect free and the write below is idempotent."""
     pending = state["pending_action"]
-    assert pending is not None
+    if pending is None:
+        raise RuntimeError("approval reached without a pending action")
     decision = interrupt(pending)  # pauses the graph; value comes from Command(resume=...)
 
     if decision.get("approve"):

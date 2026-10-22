@@ -14,7 +14,7 @@ from app.infrastructure.chroma import (
 )
 from app.observability.tracing import ingest_trace
 from app.rag.chunking import chunk_text
-from app.rag.loaders import SUPPORTED_EXTENSIONS, load_document
+from app.rag.loaders import SUPPORTED_EXTENSIONS, PageText, load_document
 from app.services.llm import Embedder
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,11 @@ def make_document_id(establishment_id: str, source: str) -> str:
 
 def _supported_files(directory: Path) -> list[Path]:
     return sorted(p for p in directory.iterdir() if p.suffix.lower() in SUPPORTED_EXTENSIONS)
+
+
+def split_pages(pages: list[PageText], size: int, overlap: int) -> list[tuple[int | None, str]]:
+    """(page number, chunk) for every chunk of every page. Pure and sync: use asyncio.to_thread."""
+    return [(page.page, piece) for page in pages for piece in chunk_text(page.text, size, overlap)]
 
 
 class IngestionService:
@@ -80,23 +85,24 @@ class IngestionService:
         ids: list[str] = []
         texts: list[str] = []
         metadatas: list[dict[str, Any]] = []
-        for page in pages:
-            for piece in chunk_text(
-                page.text, self._settings.rag_chunk_size, self._settings.rag_chunk_overlap
-            ):
-                chunk_id = f"{document_id}-{len(ids):04d}"
-                meta: dict[str, Any] = {
-                    "establishment_id": establishment_id,
-                    "source": source,
-                    "document_id": document_id,
-                    "chunk_id": chunk_id,
-                    "content_hash": content_hash,
-                }
-                if page.page is not None:
-                    meta["page"] = page.page
-                ids.append(chunk_id)
-                texts.append(piece)
-                metadatas.append(meta)
+        # Chunking is CPU-bound on large documents: keep it off the event loop.
+        pieces = await asyncio.to_thread(
+            split_pages, pages, self._settings.rag_chunk_size, self._settings.rag_chunk_overlap
+        )
+        for page_number, piece in pieces:
+            chunk_id = f"{document_id}-{len(ids):04d}"
+            meta: dict[str, Any] = {
+                "establishment_id": establishment_id,
+                "source": source,
+                "document_id": document_id,
+                "chunk_id": chunk_id,
+                "content_hash": content_hash,
+            }
+            if page_number is not None:
+                meta["page"] = page_number
+            ids.append(chunk_id)
+            texts.append(piece)
+            metadatas.append(meta)
 
         embeddings = await self._embedder.embed(texts) if texts else []
         if embeddings:
