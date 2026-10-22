@@ -22,7 +22,7 @@ Versión 2. Reconstruido con los resultados de la corrida real del 2026-10-15 (t
 | Costo de embeddings | **NO VERIFICADO** (LangSmith no tiene precio para `text-embedding-3-small`). Tokens reales. |
 | Bloqueo del event loop en ingestión | **FAIL encontrado y corregido** (ver §7). Test de regresión PASS. |
 | `docker compose up --build` | **PASS** (stack arriba, `/health` OK) |
-| Capturas de LangSmith | **PENDIENTE** (requieren tu login; checklist en [screenshots/README.md](screenshots/README.md)) |
+| Capturas de LangSmith | **Cumplido** (21/10: capturas en `screenshots/`, veredicto en [screenshots/README.md](screenshots/README.md)) |
 
 Presupuesto de OpenAI real: **8 jobs** en total en el proyecto (3 de sesiones anteriores + 5 del lote), dentro del límite de 10. **Esta versión no hizo llamadas a OpenAI.**
 
@@ -146,9 +146,9 @@ Muestra: n = 5 jobs. Se reportan **dos métodos** de p95 porque difieren con n p
 - **Trazas de ruido:** cada `_route` es un run propio. Cada arranque genera 3 `agroops.ingest` con `skipped=True`. Verificado: el reinicio de esta revisión no llamó a embeddings (los 4 embeddings de la ventana son hijos de jobs del lote, 22:20).
 - **Deprecaciones del SDK** en `scripts/langsmith_report.py` (`list_runs`, `read_run`, `get_run_url`). Migrar antes de enero de 2027. El script de carga también las usa.
 - **Warning de `langsmith.wrappers._openai_agents`** en pytest: viene de la librería, no de nuestro código.
-- **Capturas de LangSmith: PENDIENTE** (ver §9).
+- **Capturas de LangSmith: resueltas el 21/10** (ver §9).
 
-## 9. Capturas manuales pendientes
+## 9. Capturas manuales de LangSmith
 
 El checklist completo, con clics y qué debe verse, está en [screenshots/README.md](screenshots/README.md).
 Actualización (21/10): las capturas se revisaron y se organizaron en `screenshots/` con los nombres del checklist.

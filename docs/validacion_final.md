@@ -10,7 +10,7 @@ Modelos: `gpt-4o-mini` (routing, respuestas, extracción HITL) con `temperature=
 |---|---|
 | Casos reales con OpenAI (8 casos, corrida final) | **41 de 41 checks** tras corregir un check mal diseñado (ver §4). Recalculado desde las respuestas guardadas, sin nuevas llamadas. |
 | Pruebas de crash real (SIGKILL del backend) | **14 de 14 checks**. Sin jobs perdidos ni acciones duplicadas. |
-| Tests unitarios | 125 pasan, 3 omitidos (integración sin variable). |
+| Tests unitarios | 127 pasan, 3 omitidos (integración sin variable). |
 | Tests de integración con Chroma real | 3 pasan. |
 | Lint (Ruff) | Sin errores. |
 | Costo real de OpenAI | ≈ USD 0,01 en total (tope: USD 1). |
@@ -97,7 +97,7 @@ Ahora el arranque emite una traza para cada job interrumpido y la reconciliació
 - `docs/evidencia/casos_reales/`: resultados crudos de cada corrida (`corrida_1_antes_de_ajustes.json`, `corrida_2.json`, `corrida_3a_knowledge_prompt_too_strict.json`, `corrida_3_knowledge.json`, `corrida_4_final.json`).
 - `docs/evidencia/trazas/`: reportes de LangSmith de las corridas.
 - `docs/evidencia/robustez/crash_recovery.json`: resultados y conteo de trazas de las pruebas de crash.
-- `screenshots/`: capturas de LangSmith de la corrida final (`langsmith_project_runs.png`, `langsmith_trace_waterfall.png`, `langsmith_hitl_*.png`, etc.), con el veredicto de cada una en `screenshots/README.md`.
+- `screenshots/`: 8 capturas de LangSmith (`langsmith_project_runs.png`, `langsmith_individual_runs.png`, `langsmith_trace_waterfall.png`, `langsmith_embedding_nv.png`, `langsmith_hitl_runs.png`, `langsmith_hitl_pending.png`, `langsmith_hitl_resumed.png`, `langsmith_metrics_20261015.png`), con el veredicto de cada una en `screenshots/README.md`. Las originales `CAPTURA1`–`CAPTURA6` se conservan.
 - `docs/evidencia/costos.json`: agregado de tokens y costos.
 - Tests: `backend/tests/` (unitarios) y `backend/tests/integration/` (Chroma real, con `AGROOPS_INTEGRATION=1`).
 

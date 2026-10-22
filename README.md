@@ -148,8 +148,10 @@ python scripts/langsmith_report.py <job_id>   # latencia, tokens y costo por nod
 
 Los valores que LangSmith no devuelve aparecen como `NO VERIFICADO`, nunca estimados.
 Evidencia de la corrida final: [docs/evidencia/trazas/corrida_4/](docs/evidencia/trazas/corrida_4/).
-Capturas de LangSmith (lista de runs, RAG híbrido, HITL en dos trazas, costo por llamada), con el veredicto de
-cada una: [screenshots/](screenshots/README.md).
+Capturas de LangSmith de la corrida final, con el veredicto de cada una en [screenshots/README.md](screenshots/README.md):
+`langsmith_project_runs.png`, `langsmith_individual_runs.png`, `langsmith_trace_waterfall.png`,
+`langsmith_embedding_nv.png`, `langsmith_hitl_runs.png`, `langsmith_hitl_pending.png`, `langsmith_hitl_resumed.png`
+y `langsmith_metrics_20261015.png` (sesión de carga del 15/10).
 
 ## Pruebas
 
@@ -159,7 +161,7 @@ cd backend
 pytest                                # unitarias: sin red ni OpenAI
 ```
 
-Las pruebas unitarias usan fakes de Redis, LLM y Chroma (125 pasan).
+Las pruebas unitarias usan fakes de Redis, LLM y Chroma (127 pasan, 3 omitidas sin la variable de integración).
 
 Pruebas de integración contra Chroma real (sin OpenAI; embeddings locales). Usan una colección temporal que
 se borra al terminar y **fallan si LangSmith está activo**:
