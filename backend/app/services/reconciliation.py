@@ -17,6 +17,7 @@ from typing import Any
 
 from langgraph.graph.state import CompiledStateGraph
 
+from app.observability.tracing import job_output, job_trace
 from app.schemas.actions import action_status_of
 from app.schemas.tasks import Job, JobStatus
 from app.services.job_service import JobService
@@ -80,5 +81,13 @@ class JobReconciler:
                 "reconciled": True,
             }
             await self._jobs.mark_done(job.job_id, result)
+            # The graph did not run again, so trace the completion explicitly (resumed=True).
+            async with job_trace(job) as trace_run:
+                trace_run.set_status("done", reconciled=True)
+                trace_run.set_outputs(job_output(
+                    job.job_id, JobStatus.DONE,
+                    action_status=result.get("action_status"),
+                    has_answer=bool(result.get("answer")),
+                ))
             return "completed_from_checkpoint"
         return None

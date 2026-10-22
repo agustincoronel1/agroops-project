@@ -9,21 +9,24 @@ from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
 from app.api.tasks import router as tasks_router
 from app.core.config import get_settings
-from app.infrastructure.redis import create_redis_client, ping_redis
 from app.graph.builder import build_graph
 from app.infrastructure.checkpointer import open_checkpointer
 from app.infrastructure.chroma import ChromaStore
+from app.infrastructure.redis import create_redis_client, ping_redis
+from app.observability.tracing import configure_tracing, job_output, job_trace
 from app.rag.ingestion import DEMO_DOCS_DIR, IngestionService
 from app.rag.retriever import ChromaRetriever
+from app.schemas.tasks import JobStatus
 from app.services.graph_processor import make_graph_processor
 from app.services.incident_service import IncidentService
 from app.services.job_service import JobService
-from app.services.reconciliation import JobReconciler
 from app.services.llm import OpenAILLM
+from app.services.reconciliation import JobReconciler
 from app.services.task_worker import TaskWorker
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+configure_tracing(settings)
 
 
 async def _ingest_demo_docs(ingestion: IngestionService) -> None:
@@ -79,6 +82,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await JobReconciler(jobs, graph).run()
         for job_id in await jobs.fail_orphaned_running_jobs():
             logger.warning("Job %s was left RUNNING by a previous run: marked FAILED", job_id)
+            orphan = await jobs.get_job(job_id)
+            if orphan is not None:  # the crashed process never flushed its own trace
+                async with job_trace(orphan) as trace_run:
+                    trace_run.set_status("failed", error_type="INTERRUPTED")
+                    trace_run.set_outputs(job_output(job_id, JobStatus.FAILED, error_type="INTERRUPTED"))
     except Exception:  # noqa: BLE001 - recovery must never block startup
         logger.exception("Could not recover orphaned jobs")
     worker = TaskWorker(jobs, make_graph_processor(graph, settings.graph_max_steps))

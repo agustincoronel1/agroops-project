@@ -1,0 +1,141 @@
+{
+  "checks": [
+    {
+      "check": "A: job alcanza RUNNING antes del crash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "A: el job no se pierde (sigue existiendo)",
+      "ok": true,
+      "detail": "FAILED"
+    },
+    {
+      "check": "A: queda FAILED con mensaje público INTERRUPTED (sin detalle interno)",
+      "ok": true,
+      "detail": "INTERRUPTED: el servicio se reinició mientras el job estaba en ejecución. No se volvió a ejecutar; enviá la consulta de nuevo si hace falta."
+    },
+    {
+      "check": "A: no se re-ejecuta (el estado no vuelve a RUNNING/DONE)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "B: el job en curso queda FAILED (INTERRUPTED)",
+      "ok": true,
+      "detail": "FAILED"
+    },
+    {
+      "check": "B: los jobs encolados terminan DONE (no se pierden)",
+      "ok": true,
+      "detail": "['DONE', 'DONE']"
+    },
+    {
+      "check": "B: la cola de Redis quedó vacía (cada job se procesó una vez)",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "check": "B: ningún job queda en RUNNING",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "C: job llega a WAITING_APPROVAL",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "C: aprobación aceptada",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "check": "C: incidencia escrita en Redis antes de matar el backend",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "C: tras el reinicio el job termina DONE",
+      "ok": true,
+      "detail": "DONE"
+    },
+    {
+      "check": "C: action_status APPLIED",
+      "ok": true,
+      "detail": "APPLIED"
+    },
+    {
+      "check": "C: la incidencia existe exactamente una vez (sin duplicar la acción)",
+      "ok": true,
+      "detail": "['agroops:incident:db8efbebb64b424e93bbad5e4fbc1668-incident']"
+    }
+  ],
+  "jobs": {
+    "A": [
+      "e6a481f35d92432388921f4365ea2ed4"
+    ],
+    "B": [
+      "d3c4866d6c8a47939cdc6c68fcd2595d",
+      "6e2cee963f4d492bac27956eaeda1bf0",
+      "d845681c563f4d74a33b9c8358bd2fa9"
+    ],
+    "C": [
+      "db8efbebb64b424e93bbad5e4fbc1668"
+    ]
+  },
+  "traces": {
+    "e6a481f35d92432388921f4365ea2ed4": {
+      "scenario": "A",
+      "roots": 1,
+      "root_status": [
+        "error"
+      ],
+      "job_status_meta": [
+        "failed"
+      ]
+    },
+    "d3c4866d6c8a47939cdc6c68fcd2595d": {
+      "scenario": "B",
+      "roots": 1,
+      "root_status": [
+        "error"
+      ],
+      "job_status_meta": [
+        "failed"
+      ]
+    },
+    "6e2cee963f4d492bac27956eaeda1bf0": {
+      "scenario": "B",
+      "roots": 1,
+      "root_status": [
+        "success"
+      ],
+      "job_status_meta": [
+        "done"
+      ]
+    },
+    "d845681c563f4d74a33b9c8358bd2fa9": {
+      "scenario": "B",
+      "roots": 1,
+      "root_status": [
+        "success"
+      ],
+      "job_status_meta": [
+        "done"
+      ]
+    },
+    "db8efbebb64b424e93bbad5e4fbc1668": {
+      "scenario": "C",
+      "roots": 2,
+      "root_status": [
+        "success",
+        "success"
+      ],
+      "job_status_meta": [
+        "waiting_approval",
+        "done"
+      ]
+    }
+  }
+}
