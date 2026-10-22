@@ -7,6 +7,10 @@ proyecto `agroops-intelligence`.
 Estado al 2026-10-21: **evidencia suficiente para la rúbrica de observabilidad**, con dos huecos
 menores documentados abajo. Las capturas originales (`CAPTURA1`…`CAPTURA6`, del 15/10) se conservan.
 
+**Nota sobre `GraphInterrupt`:** en `langsmith_hitl_runs.png` y `langsmith_hitl_pending.png` el run `approval`
+muestra `GraphInterrupt` en la columna Error. Es la pausa de LangGraph (`interrupt`) que espera la decisión humana,
+no un fallo: la segunda traza del mismo job lo reanuda y termina en `done`.
+
 ## Capturas de la corrida final (21/10)
 
 Todas corresponden a los jobs de `docs/evidencia/casos_reales/corrida_4_final.json`.

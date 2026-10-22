@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from pydantic import BaseModel
+from redis.exceptions import RedisError
 
 from app.core.errors import public_error
 from app.observability.tracing import job_output, job_trace
@@ -33,10 +34,14 @@ class TaskWorker:
         job_service: JobService,
         processor: Processor,
         poll_timeout: int = 1,
+        persist_attempts: int = 3,
+        persist_backoff: float = 0.5,
     ) -> None:
         self._jobs = job_service
         self._processor = processor
         self._poll_timeout = poll_timeout
+        self._persist_attempts = persist_attempts
+        self._persist_backoff = persist_backoff
         self._task: asyncio.Task[None] | None = None
 
     def start(self) -> None:
@@ -66,12 +71,18 @@ class TaskWorker:
                 await asyncio.sleep(1)
 
     async def process_job(self, job_id: str) -> None:
-        current = await self._jobs.get_job(job_id)
-        if current is not None and current.status is not JobStatus.PENDING:
-            # Duplicate/stale queue entry: never run (or re-run) a non-pending job.
-            logger.warning("Job %s is %s, not PENDING: skipping", job_id, current.status)
+        try:
+            current = await self._jobs.get_job(job_id)
+            if current is not None and current.status is not JobStatus.PENDING:
+                # Duplicate/stale queue entry: never run (or re-run) a non-pending job.
+                logger.warning("Job %s is %s, not PENDING: skipping", job_id, current.status)
+                return
+            job = await self._jobs.mark_running(job_id)
+        except RedisError:
+            # Nothing has run yet, so the job is still PENDING: give it back to the queue.
+            logger.exception("Job %s: Redis failed before it started; re-queuing", job_id)
+            await self._requeue(job_id)
             return
-        job = await self._jobs.mark_running(job_id)
         if job is None:
             logger.warning("Job %s not found, skipping", job_id)
             return
@@ -81,29 +92,64 @@ class TaskWorker:
             except Exception as exc:
                 # Full details stay in the server log; the job only gets the public message.
                 logger.exception("Job %s failed", job_id)
-                await self._jobs.mark_failed(job_id, public_error(exc))
-                trace_run.set_status("failed", error_type=type(exc).__name__)
-                trace_run.set_outputs(
-                    job_output(job_id, JobStatus.FAILED, error_type=type(exc).__name__)
+                failure = public_error(exc)
+                error_type = type(exc).__name__
+                saved = await self._persist(
+                    job_id, "failure", lambda: self._jobs.mark_failed(job_id, failure)
                 )
-            else:
-                if isinstance(outcome, JobOutcome):
-                    if outcome.pending_action is not None:
-                        await self._jobs.mark_waiting_approval(job_id, outcome.pending_action)
-                        trace_run.set_status("waiting_approval")
-                        trace_run.set_outputs(
-                            job_output(
-                                job_id,
-                                JobStatus.WAITING_APPROVAL,
-                                action_status="PENDING_APPROVAL",
-                                **(outcome.trace_summary or {}),
-                            )
-                        )
-                        return
-                    outcome = outcome.result or {}
-                await self._jobs.mark_done(job_id, outcome)
-                trace_run.set_status("done")
-                trace_run.set_outputs(_done_output(job_id, outcome))
+                trace_run.set_status("failed" if saved else "persist_failed", error_type=error_type)
+                trace_run.set_outputs(job_output(job_id, JobStatus.FAILED, error_type=error_type))
+                return
+            if isinstance(outcome, JobOutcome) and outcome.pending_action is not None:
+                pending = outcome.pending_action
+                saved = await self._persist(
+                    job_id, "pending approval", lambda: self._jobs.mark_waiting_approval(job_id, pending)
+                )
+                trace_run.set_status("waiting_approval" if saved else "persist_failed")
+                trace_run.set_outputs(
+                    job_output(
+                        job_id,
+                        JobStatus.WAITING_APPROVAL,
+                        action_status="PENDING_APPROVAL",
+                        **(outcome.trace_summary or {}),
+                    )
+                )
+                return
+            result = (outcome.result or {}) if isinstance(outcome, JobOutcome) else outcome
+            saved = await self._persist(job_id, "result", lambda: self._jobs.mark_done(job_id, result))
+            trace_run.set_status("done" if saved else "persist_failed")
+            trace_run.set_outputs(_done_output(job_id, result))
+
+    async def _persist(
+        self, job_id: str, what: str, write: Callable[[], Awaitable[Any]]
+    ) -> bool:
+        """Save a job state, retrying on Redis errors. Returns False if Redis stays down.
+
+        A job that cannot be saved is left as it was. It is never run again: on restart,
+        the reconciler finishes it from its checkpoint, or marks it FAILED.
+        """
+        for attempt in range(1, self._persist_attempts + 1):
+            try:
+                await write()
+                return True
+            except RedisError as exc:
+                logger.warning(
+                    "Job %s: saving %s failed (attempt %d/%d): %s",
+                    job_id, what, attempt, self._persist_attempts, type(exc).__name__,
+                )
+                if attempt < self._persist_attempts:
+                    await asyncio.sleep(self._persist_backoff * attempt)
+        logger.error(
+            "Job %s: %s could not be saved; it stays as last saved and is reconciled on restart",
+            job_id, what,
+        )
+        return False
+
+    async def _requeue(self, job_id: str) -> None:
+        try:
+            await self._jobs.enqueue_pending_if_missing(job_id)
+        except RedisError:
+            logger.error("Job %s could not be re-queued; the reconciler will re-queue it on restart", job_id)
 
 
 def _done_output(job_id: str, result: dict[str, Any]) -> dict[str, Any]:

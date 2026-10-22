@@ -46,9 +46,8 @@ def configure_tracing(settings: Settings) -> bool:
         logger.warning("LANGSMITH_TRACING=true but LANGSMITH_API_KEY is empty: tracing disabled")
     enabled = wanted and has_key
     os.environ["LANGSMITH_TRACING"] = "true" if enabled else "false"
-    if enabled:
-        key = settings.langsmith_api_key
-        assert key is not None
+    key = settings.langsmith_api_key
+    if enabled and key is not None:
         os.environ["LANGSMITH_API_KEY"] = key.get_secret_value()
         os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
         if settings.langsmith_endpoint:

@@ -47,16 +47,22 @@ flowchart LR
 
 ## Ejecución con Docker Compose
 
-Requisitos: Docker Desktop (o Docker Engine con Compose v2).
+Requisitos: Docker Desktop (o Docker Engine) con Docker Compose 2.24 o superior, necesario para el `env_file`
+opcional. Para ejecutar las pruebas en local: Python 3.12
+(la imagen usa `python:3.12-slim`).
 
 ```bash
-cp .env.example .env          # completar OPENAI_API_KEY y APPROVAL_API_KEY
 docker compose up --build
 ```
 
-Servicios: `backend` (puerto 8000), `redis` (Redis Stack, con AOF, sin puerto publicado), `chroma`
-(puerto 8001 en el host). Al primer arranque se indexan los tres documentos DEMO del establecimiento
-`demo` (solo si hay `OPENAI_API_KEY`; si ya están indexados no se vuelven a embeber).
+Es la única instrucción necesaria. Para usar el LLM, creá `.env` a partir de `.env.example` y completá
+`OPENAI_API_KEY` (y `APPROVAL_API_KEY` para aprobar acciones). Sin clave, la API responde pero cada job
+falla con `LLM_NOT_CONFIGURED`.
+
+Servicios, todos publicados solo en `127.0.0.1`: `backend` (`localhost:8000`), `redis` (Redis Stack con AOF,
+`localhost:6379`, para las pruebas de integración) y `chroma` (`localhost:8001`). Dentro de la red de Compose
+el backend usa `redis:6379` y `chroma:8000`. Al primer arranque se indexan los tres documentos DEMO del
+establecimiento `demo` (solo si hay `OPENAI_API_KEY`; si ya están indexados no se vuelven a embeber).
 
 Verificar:
 
@@ -112,8 +118,8 @@ Todas están en [.env.example](.env.example). Solo `OPENAI_API_KEY` y `APPROVAL_
 | `OPENAI_MODEL` | `gpt-4o-mini` | Modelo de routing, extracción y respuesta. |
 | `EMBEDDING_MODEL` | `text-embedding-3-small` | Modelo de embeddings. Cambiarlo a otra dimensión exige reindexar. |
 | `APPROVAL_API_KEY` | vacío | Clave del endpoint de aprobación (header `X-API-Key`). Vacía = deshabilitado. |
-| `REDIS_URL` | `redis://redis:6379/0` | Redis Stack (requiere RedisJSON y RediSearch). |
-| `CHROMA_HOST` / `CHROMA_PORT` / `CHROMA_COLLECTION` | `chroma` / `8000` / `agroops_knowledge` | Base vectorial. |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis Stack (requiere RedisJSON y RediSearch). En Compose: `redis://redis:6379/0`. |
+| `CHROMA_HOST` / `CHROMA_PORT` / `CHROMA_COLLECTION` | `localhost` / `8001` / `agroops_knowledge` | Base vectorial. En Compose: `chroma` / `8000`. |
 | `RAG_TOP_K` | `4` | Chunks por ranking (vectorial y por palabras) antes de fusionar. |
 | `RAG_MAX_DISTANCE` | `0.75` | Distancia coseno máxima del ranking vectorial. |
 | `RAG_CHUNK_SIZE` / `RAG_CHUNK_OVERLAP` | `800` / `120` | Tamaño y solapamiento de los chunks. |
@@ -122,6 +128,10 @@ Todas están en [.env.example](.env.example). Solo `OPENAI_API_KEY` y `APPROVAL_
 | `INGEST_DEMO_ON_STARTUP` | `true` | Indexar los documentos DEMO al arrancar. |
 | `LANGSMITH_TRACING` | `false` | Trazas en LangSmith (requiere `LANGSMITH_API_KEY`). |
 | `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | vacío / `agroops-intelligence` | Proyecto de trazas. |
+
+Los defaults de la tabla son los de ejecución local (`backend/app/core/config.py`). En Compose, `REDIS_URL`
+y `CHROMA_HOST`/`CHROMA_PORT` se fijan a los valores de la red de contenedores; el resto de las variables se
+leen de `.env`.
 
 Nunca subir `.env` ni claves al repositorio. Las trazas guardan prompts y fragmentos de documentos
 (no las claves).
@@ -140,7 +150,9 @@ agroops.job                  (metadata: job_id, establishment_id, job_status, re
    └─ prepare_incident / approval (HITL)
 ```
 
-Un job que espera aprobación produce dos trazas (la inicial y la reanudación), agrupadas por `job_id`.
+Un job que espera aprobación produce dos trazas (la inicial y la reanudación), agrupadas por `job_id`. En la
+inicial, el run `approval` muestra `GraphInterrupt` en la columna Error: es la pausa esperada de LangGraph
+(`interrupt`), no un fallo.
 
 ```bash
 python scripts/langsmith_report.py <job_id>   # latencia, tokens y costo por nodo
@@ -161,13 +173,16 @@ cd backend
 pytest                                # unitarias: sin red ni OpenAI
 ```
 
-Las pruebas unitarias usan fakes de Redis, LLM y Chroma (127 pasan, 3 omitidas sin la variable de integración).
+Las pruebas unitarias usan fakes de Redis, LLM y Chroma (132 pasan; 5 de integración se omiten sin la variable).
 
-Pruebas de integración contra Chroma real (sin OpenAI; embeddings locales). Usan una colección temporal que
-se borra al terminar y **fallan si LangSmith está activo**:
+Pruebas de integración contra Redis Stack y Chroma reales (sin OpenAI; embeddings locales). Chroma usa una
+colección temporal que se borra al terminar. Las transacciones de jobs usan la base Redis 15 (nunca la 0 de la
+aplicación, para que un worker corriendo no tome jobs de prueba). El test de checkpoints usa la base 0, porque
+RediSearch solo crea índices ahí, y borra solo las claves de su propio `thread_id`. Las pruebas **fallan si
+LangSmith está activo**:
 
 ```bash
-docker compose up -d chroma
+docker compose up -d redis chroma
 cd backend
 AGROOPS_INTEGRATION=1 pytest tests/integration
 ```
@@ -205,7 +220,9 @@ Procedimiento, resultados y costos de cada corrida: [docs/validacion_final.md](d
 ## Resultados y limitaciones
 
 Validación final con OpenAI real (8 casos de agentes y HITL), pruebas de crash real y costos
-(≈ USD 0,01 en total): [docs/validacion_final.md](docs/validacion_final.md).
+(≈ USD 0,01 en total): [docs/validacion_final.md](docs/validacion_final.md). El caso B1 se revisó con un check
+después de la corrida: el registro original (40 de 41) se conserva junto al revisado (41 de 41); ver
+`docs/validacion_final.md` §4.
 
 Limitaciones principales:
 - El agente Knowledge a veces responde con un solo documento relevante, aunque otro también fue recuperado.
@@ -213,5 +230,11 @@ Limitaciones principales:
 - Un job interrumpido por un crash queda `FAILED` (no se re-ejecuta, para no duplicar acciones); hay que reenviarlo.
 - La búsqueda por palabras lee los chunks del establecimiento en cada consulta (no escala sin índice).
 - Un job se procesa a la vez; no hay paralelismo entre jobs.
-- `GET /tasks/{id}` no tiene autenticación; Redis y Chroma no usan contraseña dentro de la red de Compose.
+- `POST /tasks` y `GET /tasks/{id}` no tienen autenticación. Quien llegue a la API puede crear jobs (que consumen
+  la cuota de OpenAI) y leer sus resultados. Por eso los puertos se publican solo en `127.0.0.1`; no expongas la
+  API a otras máquinas sin agregar autenticación. Redis y Chroma no usan contraseña.
+- Si Redis deja de responder al cerrar un job, el worker reintenta la escritura; si sigue caído, el job queda
+  `RUNNING` hasta el próximo arranque. No se re-ejecuta: el reconciliador lo completa desde el checkpoint o lo
+  marca `FAILED`.
+- No hay rate limiting ni límite de jobs en cola.
 - Operations usa datos DEMO estáticos.

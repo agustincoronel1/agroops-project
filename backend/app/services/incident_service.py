@@ -34,13 +34,16 @@ class IncidentService:
             created_at=datetime.now(UTC),
             **request.model_dump(),
         )
+        # The record written with SET NX is the commit point. The index goes first (SADD is
+        # idempotent and list_incidents skips ids without a record), so a Redis error in
+        # between never leaves a stored incident that the job reports as failed.
+        await self._redis.sadd(incident_index_key(establishment_id), incident_id)
         created = await self._redis.set(
             incident_key(incident_id), incident.model_dump_json(), nx=True
         )
         if not created:
             existing = await self._redis.get(incident_key(incident_id))
             return MachineryIncident.model_validate_json(existing), False
-        await self._redis.sadd(incident_index_key(establishment_id), incident_id)
         return incident, True
 
     async def list_incidents(self, establishment_id: str) -> list[MachineryIncident]:

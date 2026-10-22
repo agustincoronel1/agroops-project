@@ -49,6 +49,16 @@ def bm25_scores(
     return scores
 
 
+def keyword_order(query: str, documents: list[str], top_k: int) -> list[int]:
+    """Indexes of the `top_k` documents with a BM25 score for the query, best first.
+
+    CPU-bound over the whole corpus: call it through asyncio.to_thread, never on the loop.
+    """
+    scores = bm25_scores(tokenize(query), [tokenize(text) for text in documents])
+    best = sorted((i for i, s in enumerate(scores) if s > 0), key=lambda i: -scores[i])
+    return best[:top_k]
+
+
 def reciprocal_rank_fusion(rankings: Iterable[list[str]], k: int = RRF_K) -> list[str]:
     """Merge ranked id lists. Ties are broken by id so the order is deterministic."""
     scores: dict[str, float] = defaultdict(float)

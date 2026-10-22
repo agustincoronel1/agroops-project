@@ -53,7 +53,8 @@ class OpenAILLM:
                     "OPENAI_API_KEY is not configured. Set it in .env to run the graph."
                 )
             key = self._settings.openai_api_key
-            assert key is not None  # guaranteed by has_openai_key
+            if key is None:  # has_openai_key already ensures this; kept explicit for type checkers
+                raise LLMConfigurationError("OPENAI_API_KEY is not configured.")
             self._client = wrap_openai_client(AsyncOpenAI(api_key=key.get_secret_value()))
         return self._client
 

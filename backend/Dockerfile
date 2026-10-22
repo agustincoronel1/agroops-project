@@ -5,11 +5,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Unprivileged user. The app only reads its code and writes nothing to disk.
+RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin agroops
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 
+USER agroops
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
