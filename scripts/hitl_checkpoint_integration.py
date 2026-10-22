@@ -25,8 +25,6 @@ import json
 import sys
 from typing import Any
 
-from pydantic import BaseModel
-
 from app.core.config import get_settings
 from app.graph.builder import build_graph
 from app.infrastructure.checkpointer import open_checkpointer
@@ -38,6 +36,7 @@ from app.services.incident_service import IncidentService
 from app.services.job_service import ApprovalConflictError, JobService
 from app.services.reconciliation import JobReconciler
 from app.services.task_worker import TaskWorker
+from pydantic import BaseModel
 
 
 class ScriptedLLM:

@@ -1,0 +1,201 @@
+[
+  {
+    "case": "K1_knowledge",
+    "job_id": "1a15513729d5449c99b4efc9b3e48e5a",
+    "establishment": "demo",
+    "question": "¿Cuál es el procedimiento de triple lavado del tanque de la pulverizadora?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "El procedimiento de triple lavado del tanque de la pulverizadora incluye realizar esta tarea después de cada jornada de trabajo, así como la limpieza de las boquillas. Es importante recalibrar las boquillas al inicio de cada campaña y reemplazarlas si el caudal difiere más de un 10% del nominal. \n\nNo se encontraron documentos adicionales específicos que detallen más información sobre este procedimiento. Sin embargo, puedes consultar el archivo [maquinaria_demo.md] para detalles sobre la maquinaria relacionada.",
+    "sources": [
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0000",
+        "page": null,
+        "distance": 0.54262733,
+        "retrieval": "hybrid"
+      },
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0001",
+        "page": null,
+        "distance": 0.39477122,
+        "retrieval": "hybrid"
+      }
+    ],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ]
+  },
+  {
+    "case": "B1_both",
+    "job_id": "c487a8c25b27443c95ba2f22f8ef167b",
+    "establishment": "demo",
+    "question": "¿Qué maquinaria está fuera de servicio y qué procedimiento de lavado aplica después de fumigar?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "operations",
+      "knowledge"
+    ],
+    "answer": "Estimado usuario,\n\nSegún los datos de demostración, actualmente la **Cosechadora** se encuentra fuera de servicio (status: broken). Sin embargo, no se ha encontrado información específica sobre el procedimiento de lavado que se debe aplicar después de fumigar.\n\nSi necesitas más detalles o asistencia adicional, no dudes en consultar nuevamente.\n\nSaludos.",
+    "sources": [],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['operations', 'knowledge']]",
+        "ok": true,
+        "detail": "['operations', 'knowledge']"
+      },
+      {
+        "check": "menciona la maquinaria rota real (datos DEMO)",
+        "ok": true,
+        "detail": "['Cosechadora']"
+      },
+      {
+        "check": "sin citas de archivos (operations no es documental)",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": false,
+        "detail": "[]"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "retrieval_modes": []
+  },
+  {
+    "case": "H1_hybrid_code",
+    "job_id": "ef007f60a4ea4dda9bb31ecf46190e54",
+    "establishment": "finca-real-qa",
+    "question": "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "De acuerdo a la información disponible, debes verificar el código de control CTRL-7731-ALFA en el tablero de la sembradora y registrar la lectura en la planilla de campo. Si el código no coincide con el de la planilla, es necesario detener la siembra y avisar al encargado de campo. \n\nPara más detalle, puedes consultar el documento [procedimiento_control_sembradora.md].",
+    "sources": [
+      {
+        "source": "procedimiento_control_sembradora.md",
+        "document_id": "25e4ad32a858fe10",
+        "chunk_id": "25e4ad32a858fe10-0000",
+        "page": null,
+        "distance": 0.18570805,
+        "retrieval": "hybrid"
+      }
+    ],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['CTRL-7731-ALFA']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ]
+  },
+  {
+    "case": "I1_isolation",
+    "job_id": "8d1397953d7c4708b521a60f4ce68ce5",
+    "establishment": "demo",
+    "question": "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "Lamentablemente, no se encontró información relevante en nuestra base de conocimientos sobre lo que debes verificar en la sembradora según el código CTRL-7731-ALFA. Te sugiero que consultes la documentación del fabricante o el manual de la sembradora para obtener detalles específicos. Si necesitas más ayuda, no dudes en preguntar.",
+    "sources": [],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge'], []]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "sin fuentes de otra finca",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "no revela el procedimiento de otra finca",
+        "ok": true,
+        "detail": "[]"
+      }
+    ]
+  }
+]

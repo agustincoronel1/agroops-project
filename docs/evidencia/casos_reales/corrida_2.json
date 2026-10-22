@@ -1,0 +1,409 @@
+[
+  {
+    "case": "C1_operations",
+    "job_id": "52f9997f5f3b46229592b20ba22a1202",
+    "establishment": "demo",
+    "question": "¿Qué maquinaria está fuera de servicio y qué tareas están pendientes?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "operations"
+    ],
+    "answer": "Estimado usuario,\n\nEn base a los datos de demostración, la información sobre la maquinaria y las tareas pendientes es la siguiente:\n\n1. **Maquinaria fuera de servicio**:\n   - **Cosechadora** (estado: \"descompuesta\", próximo servicio: 1 de octubre de 2026).\n\n2. **Tareas pendientes**:\n   - **Aplicación de fungicida** en **Lote Norte** (fecha límite: 12 de octubre de 2026).\n\nSi requieres más detalles o tienes alguna otra consulta, no dudes en hacerlo.",
+    "sources": [],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['operations']]",
+        "ok": true,
+        "detail": "['operations']"
+      },
+      {
+        "check": "menciona la maquinaria rota real (datos DEMO)",
+        "ok": true,
+        "detail": "['Cosechadora']"
+      },
+      {
+        "check": "sin citas de archivos (operations no es documental)",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "check": "menciona la tarea pendiente real",
+        "ok": true,
+        "detail": "['Aplicación de fungicida']"
+      }
+    ]
+  },
+  {
+    "case": "K1_knowledge",
+    "job_id": "12be7b4886f84492a3608a44e381a977",
+    "establishment": "demo",
+    "question": "¿Cuál es el procedimiento de triple lavado del tanque de la pulverizadora?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "El procedimiento de triple lavado del tanque de la pulverizadora consiste en realizar un lavado exhaustivo del tanque después de cada jornada de uso. Este proceso incluye enjuagar el tanque varias veces para asegurar que no queden residuos de los productos aplicados, y también implica la limpieza de las boquillas. Aunque no se detallan los métodos específicos del triple lavado, es fundamental llevar a cabo esta tarea tras cada uso de la pulverizadora. \n\nSi necesitas más información específica sobre el procedimiento, no se encontró documentación adicional que aborde el tema. Puedes consultar el documento [maquinaria_demo.md] para más detalles relacionados.",
+    "sources": [
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0000",
+        "page": null,
+        "distance": 0.54262733,
+        "retrieval": "hybrid"
+      },
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0001",
+        "page": null,
+        "distance": 0.39477122,
+        "retrieval": "hybrid"
+      }
+    ],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['maquinaria_demo.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ]
+  },
+  {
+    "case": "B1_both",
+    "job_id": "fd122b03fd16455489fb0790d603efeb",
+    "establishment": "demo",
+    "question": "¿Qué maquinaria está fuera de servicio y qué procedimiento de lavado aplica después de fumigar?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "operations",
+      "knowledge"
+    ],
+    "answer": "La maquinaria que está fuera de servicio es la \"Cosechadora\", con estado \"broken\". Además, el procedimiento de lavado que aplica después de fumigar incluye un triple lavado del tanque y la limpieza de las boquillas al final de cada jornada de trabajo con fitosanitarios. Sin embargo, los detalles específicos sobre el procedimiento no están en los datos proporcionados [procedimientos_demo.md]. \n\nEstos datos son de DEMOSTRACIÓN. Si necesitas más información o detalles específicos, no dudes en preguntar.",
+    "sources": [
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0001",
+        "page": null,
+        "distance": 0.36979187,
+        "retrieval": "hybrid"
+      },
+      {
+        "source": "procedimientos_demo.md",
+        "document_id": "b99b63b935a0ca44",
+        "chunk_id": "b99b63b935a0ca44-0000",
+        "page": null,
+        "distance": 0.44335753,
+        "retrieval": "hybrid"
+      },
+      {
+        "source": "maquinaria_demo.md",
+        "document_id": "30fd7f034d5c8ca2",
+        "chunk_id": "30fd7f034d5c8ca2-0000",
+        "page": null,
+        "distance": 0.49501252,
+        "retrieval": "hybrid"
+      }
+    ],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['operations', 'knowledge']]",
+        "ok": true,
+        "detail": "['operations', 'knowledge']"
+      },
+      {
+        "check": "menciona la maquinaria rota real (datos DEMO)",
+        "ok": true,
+        "detail": "['Cosechadora']"
+      },
+      {
+        "check": "sin citas de archivos (operations no es documental)",
+        "ok": false,
+        "detail": ""
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['maquinaria_demo.md', 'procedimientos_demo.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['procedimientos_demo.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['lavado']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ]
+  },
+  {
+    "case": "H1_hybrid_code",
+    "job_id": "43a5c052a00f460b9d14e69e478809cb",
+    "establishment": "finca-real-qa",
+    "question": "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "Para verificar la sembradora según el código CTRL-7731-ALFA, debes asegurarte de que este código esté presente en el tablero de la sembradora. Posteriormente, es necesario registrar la lectura en la planilla de campo. Si el código no coincide con el registrado en la planilla, debes detener la siembra y avisar al encargado de campo. \n\nNo se encontró información adicional específica sobre este procedimiento en la documentación disponible. Para más detalles, puedes consultar el documento [procedimiento_control_sembradora.md].",
+    "sources": [
+      {
+        "source": "procedimiento_control_sembradora.md",
+        "document_id": "25e4ad32a858fe10",
+        "chunk_id": "25e4ad32a858fe10-0000",
+        "page": null,
+        "distance": 0.18570805,
+        "retrieval": "hybrid"
+      }
+    ],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge']]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "fuentes son documentos del establecimiento",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "citas ⊆ fuentes recuperadas",
+        "ok": true,
+        "detail": "['procedimiento_control_sembradora.md']"
+      },
+      {
+        "check": "respuesta contiene el dato esperado",
+        "ok": true,
+        "detail": "['CTRL-7731-ALFA']"
+      }
+    ],
+    "retrieval_modes": [
+      "hybrid"
+    ]
+  },
+  {
+    "case": "I1_isolation",
+    "job_id": "ed379d45e1d9428da06193b22ae9479f",
+    "establishment": "demo",
+    "question": "¿Qué debo verificar en la sembradora según el código CTRL-7731-ALFA?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [
+      "knowledge"
+    ],
+    "answer": "Lamentablemente, no se encontró información relevante en la base de datos acerca de lo que debes verificar en la sembradora según el código CTRL-7731-ALFA. Te sugiero consultar con un especialista o revisar el manual del equipo para obtener detalles específicos sobre su mantenimiento y verificación. Si tienes más preguntas o necesitas asistencia adicional, no dudes en consultar.",
+    "sources": [],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [['knowledge'], []]",
+        "ok": true,
+        "detail": "['knowledge']"
+      },
+      {
+        "check": "sin fuentes de otra finca",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "no revela el procedimiento de otra finca",
+        "ok": true,
+        "detail": "[]"
+      }
+    ]
+  },
+  {
+    "case": "N1_no_info",
+    "job_id": "3ebfce57524e441a9a9102e7bfd21c61",
+    "establishment": "demo",
+    "question": "¿Cuál es la receta de la torta de chocolate?",
+    "status": "DONE",
+    "error": null,
+    "agents_consulted": [],
+    "answer": "No se encontraron documentos ni información relacionada con la receta de la torta de chocolate. Te recomiendo buscar en fuentes culinarias o sitios de cocina en línea para obtener una receta completa. Si necesitas ayuda con otra consulta, no dudes en preguntar.",
+    "sources": [],
+    "checks": [
+      {
+        "check": "status DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "delegación [[], ['knowledge']]",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "sin fuentes",
+        "ok": true,
+        "detail": "[]"
+      },
+      {
+        "check": "sin citas inventadas",
+        "ok": true,
+        "detail": "set()"
+      }
+    ]
+  },
+  {
+    "case": "HITL_approve",
+    "job_id": "e83a804109dd48679f3e62da54ca9fe9",
+    "establishment": "demo",
+    "question": "Registrá una incidencia: la cosechadora pierde presión hidráulica",
+    "status": "WAITING_APPROVAL",
+    "error": null,
+    "checks": [
+      {
+        "check": "llega a WAITING_APPROVAL",
+        "ok": true,
+        "detail": "WAITING_APPROVAL"
+      },
+      {
+        "check": "acción pendiente con severidad/máquina extraídas",
+        "ok": true,
+        "detail": "{'machine': 'cosechadora', 'description': 'la cosechadora pierde presión hidráulica', 'severity': 'medium'}"
+      },
+      {
+        "check": "decisión aceptada (aprobar)",
+        "ok": true,
+        "detail": "200"
+      },
+      {
+        "check": "estado final DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "action_status APPLIED",
+        "ok": true,
+        "detail": "APPLIED"
+      },
+      {
+        "check": "incidencia en Redis solo si se aprobó",
+        "ok": true,
+        "detail": "1"
+      }
+    ],
+    "pending_action": {
+      "action_id": "e83a804109dd48679f3e62da54ca9fe9-incident",
+      "type": "register_machinery_incident",
+      "establishment_id": "demo",
+      "payload": {
+        "machine": "cosechadora",
+        "description": "la cosechadora pierde presión hidráulica",
+        "severity": "medium"
+      },
+      "message": "Register a medium-severity incident for machine 'cosechadora': la cosechadora pierde presión hidráulica"
+    },
+    "status_after": "DONE",
+    "action_status": "APPLIED",
+    "answer": "La incidencia sobre la pérdida de presión hidráulica de la cosechadora ha sido registrada con éxito. El ID de la incidencia es e83a804109dd48679f3e62da54ca9fe9, y fue aprobado mediante revisión humana. Si necesitas más asistencia o información adicional, no dudes en consultarlo."
+  },
+  {
+    "case": "HITL_reject",
+    "job_id": "e627edcc30b94a4bacacebbe01dc6021",
+    "establishment": "demo",
+    "question": "Registrá una incidencia: el tractor tiene la batería descargada",
+    "status": "WAITING_APPROVAL",
+    "error": null,
+    "checks": [
+      {
+        "check": "llega a WAITING_APPROVAL",
+        "ok": true,
+        "detail": "WAITING_APPROVAL"
+      },
+      {
+        "check": "acción pendiente con severidad/máquina extraídas",
+        "ok": true,
+        "detail": "{'machine': 'tractor', 'description': 'La batería está descargada.', 'severity': 'medium'}"
+      },
+      {
+        "check": "decisión aceptada (rechazar)",
+        "ok": true,
+        "detail": "200"
+      },
+      {
+        "check": "estado final DONE",
+        "ok": true,
+        "detail": "DONE"
+      },
+      {
+        "check": "action_status REJECTED",
+        "ok": true,
+        "detail": "REJECTED"
+      },
+      {
+        "check": "incidencia en Redis solo si se aprobó",
+        "ok": true,
+        "detail": "0"
+      }
+    ],
+    "pending_action": {
+      "action_id": "e627edcc30b94a4bacacebbe01dc6021-incident",
+      "type": "register_machinery_incident",
+      "establishment_id": "demo",
+      "payload": {
+        "machine": "tractor",
+        "description": "La batería está descargada.",
+        "severity": "medium"
+      },
+      "message": "Register a medium-severity incident for machine 'tractor': La batería está descargada."
+    },
+    "status_after": "DONE",
+    "action_status": "REJECTED",
+    "answer": "La incidencia sobre el tractor con la batería descargada no fue registrada, ya que fue rechazada por un operador humano. Si necesitas realizar otra consulta o registrar un nuevo incidente, por favor házmelo saber."
+  }
+]

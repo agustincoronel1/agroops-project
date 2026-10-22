@@ -1,0 +1,811 @@
+{
+  "schema": "agroops-load-test/1",
+  "generated_at": "2026-10-15T22:32:46.748590+00:00",
+  "mode": "collect-only (no POST, no OpenAI)",
+  "queries": {
+    "A_operations": "¿Qué tareas están pendientes y qué maquinaria está en mantenimiento o rota en el establecimiento?",
+    "B_knowledge": "¿Qué debo hacer al terminar una aplicación de agroquímicos según el procedimiento?",
+    "C_supervisor_both": "Considerando las tareas pendientes del establecimiento y el procedimiento documentado, ¿qué debo priorizar esta semana?",
+    "D_no_info": "¿Cuál es la dosis recomendada de vacuna contra la fiebre aftosa para terneros Angus?",
+    "E_hitl": "Registrá una incidencia de maquinaria: la cosechadora perdió presión hidráulica, severidad alta."
+  },
+  "methodology": {
+    "percentiles": "n = number of jobs. p95_nearest_rank = ceil(0.95*n)-th value; p95_linear = NumPy linear interpolation. Both shown: they differ for n < 20.",
+    "post_latency_s": "client-side time of POST /tasks",
+    "queue_wait_s": "LangSmith first root start - API created_at",
+    "processing_s": "sum of LangSmith root run latencies",
+    "total_s": "API updated_at - API created_at (includes approval wait for HITL jobs)",
+    "cost": "LangSmith computed cost; embeddings have no price in LangSmith, so root cost excludes them (cost_complete=false)"
+  },
+  "jobs": [
+    {
+      "name": "A_operations",
+      "job_id": "da7fef4b6f254a6ab70e6dfd3ebcdd88",
+      "post_http": null,
+      "post_status": null,
+      "approve_http": null,
+      "api": {
+        "status": "DONE",
+        "created_at": "2026-10-15T22:20:09.573577Z",
+        "updated_at": "2026-10-15T22:20:37.880572Z",
+        "result": {
+          "answer": "Hola,\n\nAquí tienes la información sobre las tareas pendientes y el estado de la maquinaria en el establecimiento, basada en los datos de demostración:\n\n**Tareas pendientes:**\n1. **Aplicación de fungicida** en **Lote Norte** (vencimiento: 2026-10-12).\n\n**Maquinaria en mantenimiento o rota:**\n1. **Pulverizadora autopropulsada**: en mantenimiento, próximo servicio programado para el 2026-10-10.\n2. **Cosechadora**: en estado roto, próximo servicio programado para el 2026-10-01.\n\nPor otro lado, no se encontró información adicional relevante en la base de conocimientos para este establecimiento.\n\nSi requieres más detalles o asistencia, no dudes en preguntar.",
+          "agents_consulted": [
+            "operations",
+            "knowledge"
+          ],
+          "sources": [],
+          "action": null,
+          "action_status": null
+        },
+        "error": null
+      },
+      "traces": [
+        {
+          "trace_id": "01a141a7-11bf-7950-a5cc-ae00b9bbf5af",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a7-11bf-7950-a5cc-ae00b9bbf5af?poll=true",
+          "start": "2026-10-15T22:20:30.527246+00:00",
+          "latency_s": 7.353952,
+          "status": "success",
+          "job_status_meta": "done",
+          "resumed": false,
+          "outputs": {
+            "action_status": null,
+            "agents_consulted": [
+              "knowledge",
+              "operations"
+            ],
+            "error_type": null,
+            "has_answer": true,
+            "job_id": "da7fef4b6f254a6ab70e6dfd3ebcdd88",
+            "sources_count": 0,
+            "status": "DONE"
+          },
+          "tokens_in": 2521,
+          "tokens_out": 413,
+          "tokens_total": 2934,
+          "cost_total": 0.00062235,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 7.351868,
+              "tokens": 2934,
+              "tokens_known": true,
+              "cost": 0.00062235,
+              "cost_known": true
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 3,
+              "latency_s": 4.689476000000001,
+              "tokens": 1198,
+              "tokens_known": true,
+              "cost": 0.00030885,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 6,
+              "latency_s": 6.95507,
+              "tokens": 2910,
+              "tokens_known": true,
+              "cost": 0.00062235,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 3,
+              "latency_s": 0.002483,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "operations": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 1.605714,
+              "tokens": 799,
+              "tokens_known": true,
+              "cost": 0.0001707,
+              "cost_known": true
+            },
+            "knowledge": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 1.03604,
+              "tokens": 937,
+              "tokens_known": true,
+              "cost": 0.0001428,
+              "cost_known": true
+            },
+            "knowledge.retrieve": {
+              "run_type": "retriever",
+              "n": 1,
+              "latency_s": 0.356865,
+              "tokens": 24,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "openai.embeddings": {
+              "run_type": "llm",
+              "n": 1,
+              "latency_s": 0.349746,
+              "tokens": 24,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        }
+      ],
+      "langsmith_error": null,
+      "metrics": {
+        "post_latency_s": 0.05312037467956543,
+        "queue_wait_s": 20.953669,
+        "processing_s": 7.353952,
+        "total_s": 28.306995,
+        "tokens_in": 2521,
+        "tokens_out": 413,
+        "tokens_total": 2934,
+        "cost_usd_known_parts": 0.00062235,
+        "cost_complete": false
+      },
+      "not_verified": [
+        "post_http (HTTP status of POST not captured)",
+        "cost_usd (some run has no LangSmith price: embeddings)"
+      ]
+    },
+    {
+      "name": "B_knowledge",
+      "job_id": "f4cad154fc8645f0b35717952d63bfd9",
+      "post_http": null,
+      "post_status": null,
+      "approve_http": null,
+      "api": {
+        "status": "DONE",
+        "created_at": "2026-10-15T22:20:09.568088Z",
+        "updated_at": "2026-10-15T22:20:16.347532Z",
+        "result": {
+          "answer": "Al terminar una aplicación de agroquímicos, es necesario realizar el triple lavado de envases y la limpieza del equipo utilizado. Esta es una práctica recomendada para asegurar un manejo seguro y adecuado de los agroquímicos. No se encontraron más detalles específicos sobre el procedimiento, pero es fundamental seguir estas indicaciones. [Fuente: Knowledge Agent]",
+          "agents_consulted": [
+            "knowledge"
+          ],
+          "sources": [
+            {
+              "source": "procedimientos_demo.md",
+              "document_id": "b99b63b935a0ca44",
+              "chunk_id": "b99b63b935a0ca44-0000",
+              "page": null,
+              "distance": 0.3848837
+            }
+          ],
+          "action": null,
+          "action_status": null
+        },
+        "error": null
+      },
+      "traces": [
+        {
+          "trace_id": "01a141a6-bfee-7a23-85ff-b86c5af76e80",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a6-bfee-7a23-85ff-b86c5af76e80?poll=true",
+          "start": "2026-10-15T22:20:09.582456+00:00",
+          "latency_s": 6.765615,
+          "status": "success",
+          "job_status_meta": "done",
+          "resumed": false,
+          "outputs": {
+            "action_status": null,
+            "agents_consulted": [
+              "knowledge"
+            ],
+            "error_type": null,
+            "has_answer": true,
+            "job_id": "f4cad154fc8645f0b35717952d63bfd9",
+            "sources_count": 1,
+            "status": "DONE"
+          },
+          "tokens_in": 1548,
+          "tokens_out": 181,
+          "tokens_total": 1729,
+          "cost_total": 0.00033765,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 6.762063,
+              "tokens": 1729,
+              "tokens_known": true,
+              "cost": 0.00033765,
+              "cost_known": true
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 2,
+              "latency_s": 4.557059,
+              "tokens": 713,
+              "tokens_known": true,
+              "cost": 0.00017085,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 4,
+              "latency_s": 5.628878,
+              "tokens": 1708,
+              "tokens_known": true,
+              "cost": 0.00033765,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 2,
+              "latency_s": 0.001594,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "knowledge": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 2.192161,
+              "tokens": 1016,
+              "tokens_known": true,
+              "cost": 0.0001668,
+              "cost_known": true
+            },
+            "knowledge.retrieve": {
+              "run_type": "retriever",
+              "n": 1,
+              "latency_s": 1.107761,
+              "tokens": 21,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "openai.embeddings": {
+              "run_type": "llm",
+              "n": 1,
+              "latency_s": 1.092737,
+              "tokens": 21,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        }
+      ],
+      "langsmith_error": null,
+      "metrics": {
+        "post_latency_s": 0.03439640998840332,
+        "queue_wait_s": 0.014368,
+        "processing_s": 6.765615,
+        "total_s": 6.779444,
+        "tokens_in": 1548,
+        "tokens_out": 181,
+        "tokens_total": 1729,
+        "cost_usd_known_parts": 0.00033765,
+        "cost_complete": false
+      },
+      "not_verified": [
+        "post_http (HTTP status of POST not captured)",
+        "cost_usd (some run has no LangSmith price: embeddings)"
+      ]
+    },
+    {
+      "name": "C_supervisor_both",
+      "job_id": "efd60c24132644328038b789a7aee194",
+      "post_http": null,
+      "post_status": null,
+      "approve_http": null,
+      "api": {
+        "status": "DONE",
+        "created_at": "2026-10-15T22:20:09.569013Z",
+        "updated_at": "2026-10-15T22:20:25.594547Z",
+        "result": {
+          "answer": "Estimado usuario,\n\nCon base en la información disponible, aquí están las recomendaciones para priorizar tus tareas esta semana:\n\n1. **Control de la incidencia (I1)**: Tienes una incidencia de \"presencia de roya en bordes\" en el Lote Norte (L1), que es de severidad media y no ha sido resuelta. Es crucial abordar este problema de inmediato, ya que podría afectar el rendimiento de la soja en floración.\n\n2. **Aplicación de fungicida (T1)**: Esta tarea está pendiente en el Lote Norte (L1) y debe llevarse a cabo después de tratar la incidencia mencionada.\n\n3. **Monitoreo del estatus de la pulverizadora**: Ten en cuenta que la pulverizadora está en mantenimiento y se aproxima la fecha de su próximo servicio el 10 de octubre.\n\nPor otro lado, la fertilización nitrogenada en el Lote Sur (L2) está en progreso y no se considera una prioridad inmediata en comparación con las tareas en el Lote Norte.\n\nRecuerda que según el procedimiento de priorización de tareas, es importante enfocar esfuerzos en aquellas vinculadas a incidencias de severidad alta, tareas con vencimiento próximo y mantenimiento preventivo [tareas_agropecuarias_demo.md].\n\nSi tienes alguna otra consulta, no dudes en preguntar.\n\nSaludos,  \nSupervisor de AgroOps",
+          "agents_consulted": [
+            "operations",
+            "knowledge"
+          ],
+          "sources": [
+            {
+              "source": "tareas_agropecuarias_demo.md",
+              "document_id": "4905234984b50e1f",
+              "chunk_id": "4905234984b50e1f-0001",
+              "page": null,
+              "distance": 0.49842966
+            }
+          ],
+          "action": null,
+          "action_status": null
+        },
+        "error": null
+      },
+      "traces": [
+        {
+          "trace_id": "01a141a6-da5d-7d10-af79-9a422d59af34",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a6-da5d-7d10-af79-9a422d59af34?poll=true",
+          "start": "2026-10-15T22:20:16.349852+00:00",
+          "latency_s": 9.245123,
+          "status": "success",
+          "job_status_meta": "done",
+          "resumed": false,
+          "outputs": {
+            "action_status": null,
+            "agents_consulted": [
+              "knowledge",
+              "operations"
+            ],
+            "error_type": null,
+            "has_answer": true,
+            "job_id": "efd60c24132644328038b789a7aee194",
+            "sources_count": 1,
+            "status": "DONE"
+          },
+          "tokens_in": 2700,
+          "tokens_out": 660,
+          "tokens_total": 3360,
+          "cost_total": 0.0007971,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 9.243232,
+              "tokens": 3360,
+              "tokens_known": true,
+              "cost": 0.0007971,
+              "cost_known": true
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 3,
+              "latency_s": 5.280851,
+              "tokens": 1449,
+              "tokens_known": true,
+              "cost": 0.00038924999999999995,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 6,
+              "latency_s": 8.883136,
+              "tokens": 3334,
+              "tokens_known": true,
+              "cost": 0.0007970999999999999,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 3,
+              "latency_s": 0.002434,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "operations": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 2.491153,
+              "tokens": 900,
+              "tokens_known": true,
+              "cost": 0.0002295,
+              "cost_known": true
+            },
+            "knowledge": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 1.45702,
+              "tokens": 1011,
+              "tokens_known": true,
+              "cost": 0.00017835,
+              "cost_known": true
+            },
+            "knowledge.retrieve": {
+              "run_type": "retriever",
+              "n": 1,
+              "latency_s": 0.326689,
+              "tokens": 26,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "openai.embeddings": {
+              "run_type": "llm",
+              "n": 1,
+              "latency_s": 0.318308,
+              "tokens": 26,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        }
+      ],
+      "langsmith_error": null,
+      "metrics": {
+        "post_latency_s": 0.04905533790588379,
+        "queue_wait_s": 6.780839,
+        "processing_s": 9.245123,
+        "total_s": 16.025534,
+        "tokens_in": 2700,
+        "tokens_out": 660,
+        "tokens_total": 3360,
+        "cost_usd_known_parts": 0.0007971,
+        "cost_complete": false
+      },
+      "not_verified": [
+        "post_http (HTTP status of POST not captured)",
+        "cost_usd (some run has no LangSmith price: embeddings)"
+      ]
+    },
+    {
+      "name": "D_no_info",
+      "job_id": "288438466b4342578e8081ea36dd89e5",
+      "post_http": null,
+      "post_status": null,
+      "approve_http": null,
+      "api": {
+        "status": "DONE",
+        "created_at": "2026-10-15T22:20:09.571915Z",
+        "updated_at": "2026-10-15T22:20:30.524887Z",
+        "result": {
+          "answer": "Lamentablemente, no se encontró información específica sobre la dosis recomendada de vacuna contra la fiebre aftosa para terneros Angus en nuestra base de datos. Te recomendamos consultar a un veterinario especializado o revisar las pautas proporcionadas por el fabricante de la vacuna para obtener información precisa y actualizada. Si tienes más preguntas, no dudes en hacerlas.",
+          "agents_consulted": [
+            "knowledge"
+          ],
+          "sources": [],
+          "action": null,
+          "action_status": null
+        },
+        "error": null
+      },
+      "traces": [
+        {
+          "trace_id": "01a141a6-fe7c-7a52-b8be-f1ce01c5ce33",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a6-fe7c-7a52-b8be-f1ce01c5ce33?poll=true",
+          "start": "2026-10-15T22:20:25.596911+00:00",
+          "latency_s": 4.9285,
+          "status": "success",
+          "job_status_meta": "done",
+          "resumed": false,
+          "outputs": {
+            "action_status": null,
+            "agents_consulted": [
+              "knowledge"
+            ],
+            "error_type": null,
+            "has_answer": true,
+            "job_id": "288438466b4342578e8081ea36dd89e5",
+            "sources_count": 0,
+            "status": "DONE"
+          },
+          "tokens_in": 1525,
+          "tokens_out": 195,
+          "tokens_total": 1720,
+          "cost_total": 0.0003423,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 4.926596,
+              "tokens": 1720,
+              "tokens_known": true,
+              "cost": 0.0003423,
+              "cost_known": true
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 2,
+              "latency_s": 3.574128,
+              "tokens": 750,
+              "tokens_known": true,
+              "cost": 0.0001944,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 4,
+              "latency_s": 4.309202,
+              "tokens": 1697,
+              "tokens_known": true,
+              "cost": 0.0003423,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 2,
+              "latency_s": 0.002428,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "knowledge": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 1.342581,
+              "tokens": 970,
+              "tokens_known": true,
+              "cost": 0.0001479,
+              "cost_known": true
+            },
+            "knowledge.retrieve": {
+              "run_type": "retriever",
+              "n": 1,
+              "latency_s": 0.594221,
+              "tokens": 23,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "openai.embeddings": {
+              "run_type": "llm",
+              "n": 1,
+              "latency_s": 0.586399,
+              "tokens": 23,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        }
+      ],
+      "langsmith_error": null,
+      "metrics": {
+        "post_latency_s": 0.049112558364868164,
+        "queue_wait_s": 16.024996,
+        "processing_s": 4.9285,
+        "total_s": 20.952972,
+        "tokens_in": 1525,
+        "tokens_out": 195,
+        "tokens_total": 1720,
+        "cost_usd_known_parts": 0.0003423,
+        "cost_complete": false
+      },
+      "not_verified": [
+        "post_http (HTTP status of POST not captured)",
+        "cost_usd (some run has no LangSmith price: embeddings)"
+      ]
+    },
+    {
+      "name": "E_hitl",
+      "job_id": "7cce4c42563b4346817f87370daf9312",
+      "post_http": null,
+      "post_status": null,
+      "approve_http": null,
+      "api": {
+        "status": "DONE",
+        "created_at": "2026-10-15T22:20:09.575313Z",
+        "updated_at": "2026-10-15T22:20:42.116376Z",
+        "result": {
+          "answer": "La incidencia de maquinaria ha sido registrada correctamente. Se trata de la cosechadora que perdió presión hidráulica, con severidad alta. La referencia de la incidencia es 7cce4c42563b4346817f87370daf9312. Si necesitas más información o asistencia adicional, no dudes en preguntar.",
+          "agents_consulted": [
+            "actions"
+          ],
+          "sources": [],
+          "action": {
+            "status": "executed",
+            "incident_id": "7cce4c42563b4346817f87370daf9312-incident",
+            "created": true
+          },
+          "action_status": "APPLIED"
+        },
+        "error": null
+      },
+      "traces": [
+        {
+          "trace_id": "01a141a7-2e7b-7bd2-82fd-7d8ed8805074",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a7-2e7b-7bd2-82fd-7d8ed8805074?poll=true",
+          "start": "2026-10-15T22:20:37.883269+00:00",
+          "latency_s": 1.52844,
+          "status": "success",
+          "job_status_meta": "waiting_approval",
+          "resumed": false,
+          "outputs": {
+            "action_status": "PENDING_APPROVAL",
+            "agents_consulted": [],
+            "error_type": null,
+            "has_answer": false,
+            "job_id": "7cce4c42563b4346817f87370daf9312",
+            "sources_count": 0,
+            "status": "WAITING_APPROVAL"
+          },
+          "tokens_in": 395,
+          "tokens_out": 44,
+          "tokens_total": 439,
+          "cost_total": 8.565e-05,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 1.526822,
+              "tokens": 439,
+              "tokens_known": true,
+              "cost": 8.565e-05,
+              "cost_known": true
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.676192,
+              "tokens": 246,
+              "tokens_known": true,
+              "cost": 4.725e-05,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 2,
+              "latency_s": 1.501269,
+              "tokens": 439,
+              "tokens_known": true,
+              "cost": 8.565e-05,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.0006,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "prepare_incident": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.829837,
+              "tokens": 193,
+              "tokens_known": true,
+              "cost": 3.84e-05,
+              "cost_known": true
+            },
+            "approval": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.008891,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        },
+        {
+          "trace_id": "01a141a7-36df-7f63-b24a-4a5768a560ce",
+          "url": "https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a141a7-36df-7f63-b24a-4a5768a560ce?poll=true",
+          "start": "2026-10-15T22:20:40.031884+00:00",
+          "latency_s": 2.08532,
+          "status": "success",
+          "job_status_meta": "done",
+          "resumed": true,
+          "outputs": {
+            "action_status": "APPLIED",
+            "agents_consulted": [
+              "actions"
+            ],
+            "error_type": null,
+            "has_answer": true,
+            "job_id": "7cce4c42563b4346817f87370daf9312",
+            "sources_count": 0,
+            "status": "DONE"
+          },
+          "tokens_in": 358,
+          "tokens_out": 99,
+          "tokens_total": 457,
+          "cost_total": 0.0001131,
+          "nodes": {
+            "agroops.graph": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 2.082988,
+              "tokens": 457,
+              "tokens_known": true,
+              "cost": 0.0001131,
+              "cost_known": true
+            },
+            "approval": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.001137,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            },
+            "supervisor": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 2.073461,
+              "tokens": 457,
+              "tokens_known": true,
+              "cost": 0.0001131,
+              "cost_known": true
+            },
+            "openai.chat": {
+              "run_type": "llm",
+              "n": 2,
+              "latency_s": 2.0681950000000002,
+              "tokens": 457,
+              "tokens_known": true,
+              "cost": 0.00011310000000000001,
+              "cost_known": true
+            },
+            "_route": {
+              "run_type": "chain",
+              "n": 1,
+              "latency_s": 0.000876,
+              "tokens": 0,
+              "tokens_known": true,
+              "cost": 0.0,
+              "cost_known": false
+            }
+          }
+        }
+      ],
+      "langsmith_error": null,
+      "metrics": {
+        "post_latency_s": 0.054363250732421875,
+        "queue_wait_s": 28.307956,
+        "processing_s": 3.61376,
+        "total_s": 32.541063,
+        "tokens_in": 753,
+        "tokens_out": 143,
+        "tokens_total": 896,
+        "cost_usd_known_parts": 0.00019874999999999998,
+        "cost_complete": true
+      },
+      "not_verified": [
+        "post_http (HTTP status of POST not captured)",
+        "approve_http (approval HTTP status not captured; effect verified in API)"
+      ]
+    }
+  ],
+  "summary": {
+    "post_latency_s": {
+      "n": 5,
+      "missing": 0,
+      "p50": 0.049112558364868164,
+      "p95_nearest_rank": 0.054363250732421875,
+      "p95_linear": 0.054114675521850585,
+      "mean": 0.04800958633422851,
+      "max": 0.054363250732421875
+    },
+    "queue_wait_s": {
+      "n": 5,
+      "missing": 0,
+      "p50": 16.024996,
+      "p95_nearest_rank": 28.307956,
+      "p95_linear": 26.8370986,
+      "mean": 14.4163656,
+      "max": 28.307956
+    },
+    "processing_s": {
+      "n": 5,
+      "missing": 0,
+      "p50": 6.765615,
+      "p95_nearest_rank": 9.245123,
+      "p95_linear": 8.8668888,
+      "mean": 6.38139,
+      "max": 9.245123
+    },
+    "total_s": {
+      "n": 5,
+      "missing": 0,
+      "p50": 20.952972,
+      "p95_nearest_rank": 32.541063,
+      "p95_linear": 31.6942494,
+      "mean": 20.9212016,
+      "max": 32.541063
+    },
+    "tokens_total_sum": 10639,
+    "cost_usd_sum_known": 0.00229815,
+    "jobs_done": 5,
+    "jobs": 5
+  }
+}

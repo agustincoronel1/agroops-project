@@ -1,0 +1,16 @@
+
+=== trace 01a160ab-84aa-7391-bb3f-38b4cb76727d  (name=agroops.job, status=success) ===
+url: https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/r/01a160ab-84aa-7391-bb3f-38b4cb76727d?poll=true
+job_id=52f9997f5f3b46229592b20ba22a1202 establishment_id=demo job_status=done resumed=False
+total latency: 7.15s | tokens in/out/total: 1389/307/1696 | cost in/out/total (USD): 0.00020835/0.0001842/0.00039255
+- agroops.job [chain] 7.15s tok=1696 cost=0.00039255
+  - agroops.graph [chain] 7.14s tok=1696 cost=0.00039255
+    - supervisor [chain] 2.27s tok=283 cost=0.0000591
+      - openai.chat [llm] 1.47s tok=283 cost=0.0000591 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO
+    - operations [chain] 1.62s tok=773 cost=0.0001569
+      - openai.chat [llm] 1.58s tok=773 cost=0.0001569 model=gpt-4o-mini
+    - supervisor [chain] 3.23s tok=640 cost=0.00017655
+      - openai.chat [llm] 1.54s tok=310 cost=0.0000744 model=gpt-4o-mini
+      - openai.chat [llm] 1.68s tok=330 cost=0.00010215 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=0 cost=NO VERIFICADO

@@ -1,0 +1,25 @@
+
+=== trace 01a160f7-cd4c-70c8-a3b5-34556d949c1f  (name=agroops.job, status=success) ===
+url: https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/trace/01a160f7-cd4c-70c8-a3b5-34556d949c1f/run/01a160f7-cd4c-70c8-a3b5-34556d949c1f
+job_id=b2d91adccaf74e39a3af22496335c19e establishment_id=demo job_status=waiting_approval resumed=False
+total latency: 1.91s | tokens in/out/total (llm runs): 410/50/460 | cost total (USD): 9.15e-05
+- agroops.job [chain] 1.91s tok=460 cost=9.15e-05
+  - agroops.graph [chain] 1.91s tok=460 cost=9.15e-05
+    - supervisor [chain] 1.02s tok=279 cost=5.67e-05
+      - openai.chat [llm] 1.01s tok=279 cost=5.67e-05 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=NO VERIFICADO cost=NO VERIFICADO
+    - prepare_incident [chain] 0.87s tok=181 cost=3.48e-05
+      - openai.chat [llm] 0.87s tok=181 cost=3.48e-05 model=gpt-4o-mini
+    - approval [chain] 0.00s tok=NO VERIFICADO cost=NO VERIFICADO
+
+=== trace 01a160f7-d56a-7659-b19a-51fb02c3551c  (name=agroops.job, status=success) ===
+url: https://smith.langchain.com/o/5f98afe5-9555-4add-89f4-cec016cca5d6/projects/p/24139510-421b-489e-88a3-6455cc875068/trace/01a160f7-d56a-7659-b19a-51fb02c3551c/run/01a160f7-d56a-7659-b19a-51fb02c3551c
+job_id=b2d91adccaf74e39a3af22496335c19e establishment_id=demo job_status=done resumed=True
+total latency: 3.13s | tokens in/out/total (llm runs): 375/84/459 | cost total (USD): 0.00010665
+- agroops.job [chain] 3.13s tok=459 cost=0.00010665
+  - agroops.graph [chain] 3.13s tok=459 cost=0.00010665
+    - approval [chain] 0.00s tok=NO VERIFICADO cost=NO VERIFICADO
+    - supervisor [chain] 3.11s tok=459 cost=0.00010665
+      - openai.chat [llm] 1.28s tok=281 cost=5.7e-05 model=gpt-4o-mini
+      - openai.chat [llm] 1.81s tok=178 cost=4.965e-05 model=gpt-4o-mini
+      - _route [chain] 0.00s tok=NO VERIFICADO cost=NO VERIFICADO
